@@ -70,7 +70,11 @@ function createBookmarkElement(bookmark) {
     deleteBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-        showDeleteConfirmation(bookmark, e);
+
+        // Use native confirm dialog
+        if (confirm(`Delete "${bookmark.title}"?`)) {
+            deleteBookmark(bookmark.id);
+        }
     });
 
     // Add delete button to the container
@@ -842,125 +846,7 @@ function getBookmarkFolderPath(bookmark) {
     return path;
 }
 
-// Show confirmation dialog for bookmark deletion
-function showDeleteConfirmation(bookmark, event) {
 
-    // Close any existing dialog first
-    hideDeleteConfirmation();
-
-    // Get the clicked delete button element and its position
-    const deleteButton = event.currentTarget;
-
-    // Get position of the delete button for positioning the dialog
-    const buttonRect = deleteButton.getBoundingClientRect();
-
-    // Create confirmation dialog
-    const confirmDialog = div('delete-confirm', { id: 'delete-confirm' });
-
-    // Position the dialog to the left of the delete button
-    confirmDialog.style.position = 'fixed';
-    confirmDialog.style.right = `${window.innerWidth - buttonRect.left + 10}px`;
-    confirmDialog.style.top = `${buttonRect.top - 5}px`;
-
-    // Dialog content
-    const title = createElement('h3', { textContent: 'Delete Bookmark' });
-    const message = createElement('p', { textContent: `Delete "${bookmark.title}"?` });
-    const buttonsContainer = div('delete-confirm-buttons');
-
-    const cancelBtn = createElement('button',
-        {
-            className: 'delete-confirm-cancel',
-            textContent: 'Cancel',
-        },
-    );
-
-    const deleteBtn = createElement('button',
-        {
-            className: 'delete-confirm-delete',
-            textContent: 'Delete',
-        },
-    );
-
-    cancelBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        hideDeleteConfirmation();
-    });
-
-    // Add keyboard controls for easier navigation
-    cancelBtn.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab' && e.shiftKey) {
-            e.preventDefault();
-            deleteBtn.focus();
-        }
-    });
-
-    deleteBtn.addEventListener('click', (e) => {
-        e.stopPropagation();
-        deleteBookmark(bookmark.id);
-        hideDeleteConfirmation();
-    });
-
-    // Add keyboard controls for easier navigation
-    deleteBtn.addEventListener('keydown', (e) => {
-        if (e.key === 'Tab' && !e.shiftKey) {
-            e.preventDefault();
-            cancelBtn.focus();
-        }
-    });
-
-    // Assemble the dialog
-    buttonsContainer.appendChild(cancelBtn);
-    buttonsContainer.appendChild(deleteBtn);
-
-    confirmDialog.appendChild(title);
-    confirmDialog.appendChild(message);
-    confirmDialog.appendChild(buttonsContainer);
-
-    // Store original button for reference
-    confirmDialog.dataset.sourceButtonId = deleteButton.id || Date.now().toString();
-    if (!deleteButton.id) {
-        deleteButton.id = confirmDialog.dataset.sourceButtonId;
-    }
-
-    // Add to document body instead of the bookmark item
-    document.body.appendChild(confirmDialog);
-
-    // Focus on the Cancel button by default (safer option)
-    cancelBtn.focus();
-
-    // Add keyboard event listener for Escape key
-    document.addEventListener('keydown', handleEscapeKey);
-
-    // Add click outside to close
-    setTimeout(() => {
-        document.addEventListener('click', handleClickOutside);
-    }, 10);
-}
-
-function hideDeleteConfirmation() {
-    // Remove the dialog
-    const dialog = document.getElementById('delete-confirm');
-    if (dialog) {
-        document.body.removeChild(dialog);
-    }
-
-    // Remove event listeners
-    document.removeEventListener('keydown', handleEscapeKey);
-    document.removeEventListener('click', handleClickOutside);
-}
-
-function handleEscapeKey(e) {
-    if (e.key === 'Escape') {
-        hideDeleteConfirmation();
-    }
-}
-
-function handleClickOutside(e) {
-    const dialog = document.getElementById('delete-confirm');
-    if (dialog && !dialog.contains(e.target) && !e.target.classList.contains('delete-button')) {
-        hideDeleteConfirmation();
-    }
-}
 
 function deleteBookmark(id) {
     chrome.bookmarks.remove(id, () => {
