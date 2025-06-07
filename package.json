@@ -1,0 +1,20 @@
+{
+    "name": "bookmark-new-tab-extension",
+    "version": "1.0.0",
+    "description": "Chrome bookmark extension with Playwright tests",
+    "scripts": {
+        "test": "playwright test",
+        "test:headed": "playwright test --headed",
+        "test:debug": "playwright test --debug"
+    },
+    "devDependencies": {
+        "@playwright/test": "^1.40.0"
+    },
+    "keywords": [
+        "chrome-extension",
+        "bookmarks",
+        "new-tab"
+    ],
+    "author": "",
+    "license": "MIT"
+}

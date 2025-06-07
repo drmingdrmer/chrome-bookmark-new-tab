@@ -753,4 +753,4 @@ document.addEventListener('DOMContentLoaded', () => {
 
     // Set up the global drag end handler
     setupGlobalDragEndHandler();
-}); 
+});
