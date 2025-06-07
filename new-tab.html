@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>New Tab</title>
+    <link rel="stylesheet" href="new-tab.css">
+</head>
+
+<body>
+    <div class="content">
+        <div class="settings">
+            <div class="settings-icon" id="settings-toggle">⚙️</div>
+            <div class="settings-panel" id="settings-panel">
+                <div class="setting-item">
+                    <label for="max-entries">Maximum entries per column</label>
+                    <input type="number" id="max-entries" min="5" max="100" value="20">
+                </div>
+            </div>
+        </div>
+        <input type="text" class="search-box" placeholder="Search bookmarks..." id="searchBox" autofocus>
+        <div id="bookmarks-container" class="bookmarks-container"></div>
+    </div>
+
+    <script src="ui.js" type="module"></script>
+    <script src="new-tab.js" type="module"></script>
+</body>
+
+</html>
