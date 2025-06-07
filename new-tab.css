@@ -31,9 +31,6 @@ body::before {
     z-index: 1;
 }
 
-.title {
-    display: none;
-}
 
 .settings {
     display: flex;
@@ -203,9 +200,7 @@ body::before {
     border-bottom: 2px solid rgba(255, 255, 255, 0.8);
 }
 
-.bookmark-item.deleting {
-    z-index: 99998;
-}
+
 
 .drag-handle {
     display: flex;
@@ -334,12 +329,6 @@ body::before {
 
 
 
-.overlay {
-    display: none;
-}
-
-/* Search mode styles */
-/* Removing the rule that hides delete buttons during search mode */
 
 @media (max-width: 768px) {
     .bookmarks-container {
@@ -348,7 +337,6 @@ body::before {
 
     .delete-button {
         opacity: 0.5;
-        /* Make delete button more visible on mobile */
     }
 }
 
@@ -363,6 +351,5 @@ body::before {
 
     .bookmark-content {
         padding-right: 30px;
-        /* Make room for delete button */
     }
 }

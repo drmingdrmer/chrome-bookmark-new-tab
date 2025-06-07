@@ -1,10 +1,3 @@
-// Global bookmarks store
-const allBookmarks = {};
-let bookmarkTreeNodes = null; // Store the original bookmark tree
-let config = {
-    maxEntriesPerColumn: 10,
-};
-// Import drag operations from drag.js
 import {
     handleDragStart,
     handleDragOver,
@@ -15,10 +8,12 @@ import {
     addEmptyFolderDragoverHandler,
     setupGlobalDragEndHandler,
 } from './drag.js';
-// Import helper functions for UI elements from ui.js
 import { createElement, div, textDiv, textSpan } from './ui.js';
-// Import folder color functions from folder_color.js
 import { getFolderColor, resetFolderColors } from './folder_color.js';
+
+const allBookmarks = {};
+let bookmarkTreeNodes = null;
+let config = { maxEntriesPerColumn: 10 };
 
 
 function createBookmarkElement(bookmark) {
@@ -156,8 +151,7 @@ function renderBookmarks() {
     // Reset folder colors on re-render
     resetFolderColors();
 
-    // Remove search mode class when returning to normal view
-    document.body.classList.remove('search-mode');
+
 
     // Get folders in correct order from the bookmark tree
     const { folders: topLevelFolders, directBookmarks } = getOrderedTopLevelFolders();
@@ -374,11 +368,7 @@ function processBookmarksInFolder(childIds, container, skipSubfolders = false) {
         addEmptyFolderDragoverHandler(container);
 
         container.addEventListener('drop', (e) => {
-            // Get folder id from closest parent with folder-content class
-            const folderContent = container.closest('.folder-content');
-            if (!folderContent) return;
-
-            const folderColumn = folderContent.closest('.folder-column');
+            const folderColumn = container.closest('.folder-column');
             if (!folderColumn || !folderColumn.dataset.folderId) return;
 
             const folderId = folderColumn.dataset.folderId;
@@ -399,8 +389,7 @@ function filterBookmarks(searchTerm) {
         return;
     }
 
-    // Add a class to the body or container to indicate search mode
-    document.body.classList.add('search-mode');
+
 
     // Reset folder colors for search
     resetFolderColors();
@@ -519,9 +508,9 @@ function filterBookmarks(searchTerm) {
                     moreLink.style.textAlign = 'center';
                     moreLink.addEventListener('click', (e) => {
                         e.preventDefault();
-                        // Clear search and show this folder's contents
+                        // Clear search to show all bookmarks
                         document.getElementById('searchBox').value = '';
-                        showFolderContents(folder.id);
+                        renderBookmarks();
                     });
                     content.appendChild(moreLink);
                 }
@@ -557,27 +546,30 @@ function filterBookmarks(searchTerm) {
         container.appendChild(bookmarkSectionHeader);
 
         // Group matches by parent folder
-        const folderMatches = {};
-        const folderMatchOrder = []; // Track insertion order
+        const folderGroups = [];
+        const folderKeys = new Set();
 
         matchingBookmarks.forEach(bookmark => {
             // Find the folder path for this bookmark
             const folderPath = getBookmarkFolderPath(bookmark);
             const folderKey = folderPath.map(f => f.id).join('-');
 
-            if (!folderMatches[folderKey]) {
-                folderMatches[folderKey] = {
+            if (!folderKeys.has(folderKey)) {
+                folderKeys.add(folderKey);
+                folderGroups.push({
                     path: folderPath,
                     bookmarks: [],
-                };
-                folderMatchOrder.push(folderKey); // Remember the order
+                });
             }
-            folderMatches[folderKey].bookmarks.push(bookmark);
+
+            const group = folderGroups.find(g =>
+                g.path.map(f => f.id).join('-') === folderKey
+            );
+            group.bookmarks.push(bookmark);
         });
 
-        // Process folder matches in the original order they were encountered
-        folderMatchOrder.forEach(key => {
-            const group = folderMatches[key];
+        // Process folder groups
+        folderGroups.forEach(group => {
             const { path, bookmarks } = group;
 
             // Get the top-level folder to use for coloring
@@ -639,6 +631,23 @@ function getFolderPath(folder) {
 
         path.unshift(parentFolder); // Add to beginning of array
         currentId = parentFolder.parentId;
+    }
+
+    return path;
+}
+
+// Helper function to get the full folder path for a bookmark
+function getBookmarkFolderPath(bookmark) {
+    const path = [];
+    let currentId = bookmark.parentId;
+
+    // Traverse up the folder hierarchy
+    while (currentId) {
+        const folder = allBookmarks[currentId];
+        if (!folder) break;
+
+        path.unshift(folder); // Add to beginning of array
+        currentId = folder.parentId;
     }
 
     return path;
@@ -772,81 +781,6 @@ function highlightText(element, searchTerm) {
     }
 }
 
-// Show contents of a specific folder
-function showFolderContents(folderId) {
-    const folder = allBookmarks[folderId];
-    if (!folder || !folder.isFolder) return;
-
-    const container = document.getElementById('bookmarks-container');
-    container.innerHTML = '';
-
-    // Get folder path
-    const folderPath = getFolderPath(folder);
-    const pathDisplay = folderPath.map(f => f.title).join(' > ');
-
-    // Create folder content
-    const { column, content } = createFolderColumn(pathDisplay, null, folder.id);
-
-    // Create a custom function to process folder contents with search mode awareness
-    function processFolderContentsWithMode(childIds, container) {
-        // Process items in order
-        childIds.forEach(childId => {
-            const item = allBookmarks[childId];
-            if (!item) return;
-
-            if (item.isFolder) {
-                // This is a subfolder, add a header
-                const subfolderHeader = textDiv('subfolder', item.title);
-                container.appendChild(subfolderHeader);
-
-                // Process bookmarks in this subfolder
-                if (item.children && item.children.length > 0) {
-                    processFolderContentsWithMode(item.children, container);
-                }
-            } else {
-                // This is a bookmark, add it to the container (respecting search mode)
-                container.appendChild(createBookmarkElement(item));
-            }
-        });
-    }
-
-    // Process folder contents with search mode awareness
-    if (folder.children && folder.children.length > 0) {
-        processFolderContentsWithMode(folder.children, content);
-    } else {
-        const emptyNote = div('', {
-            textContent: 'This folder is empty',
-            style: {
-                fontStyle: 'italic',
-                padding: '5px',
-                opacity: '0.7',
-            },
-        });
-        content.appendChild(emptyNote);
-    }
-
-    column.style.gridColumn = '1 / -1';
-    container.appendChild(column);
-}
-
-// Helper function to get the full folder path for a bookmark
-function getBookmarkFolderPath(bookmark) {
-    const path = [];
-    let currentId = bookmark.parentId;
-
-    // Traverse up the folder hierarchy
-    while (currentId) {
-        const folder = allBookmarks[currentId];
-        if (!folder) break;
-
-        path.unshift(folder); // Add to beginning of array
-        currentId = folder.parentId;
-    }
-
-    return path;
-}
-
-
 
 function deleteBookmark(id) {
     chrome.bookmarks.remove(id, () => {
@@ -891,17 +825,15 @@ function saveSettings() {
     const maxEntriesInput = document.getElementById('max-entries');
     config.maxEntriesPerColumn = parseInt(maxEntriesInput.value) || 20;
 
-    // Save to storage
-    chrome.storage.sync.set({ config: config }, function () {
-        renderBookmarks(); // Re-render with new settings
+    chrome.storage.sync.set({ config: config }, () => {
+        renderBookmarks();
     });
 }
 
 function loadSettings() {
-    chrome.storage.sync.get('config', function (result) {
+    chrome.storage.sync.get('config', (result) => {
         if (result.config) {
             config = result.config;
-            // Update input values
             document.getElementById('max-entries').value = config.maxEntriesPerColumn;
         }
     });
@@ -928,7 +860,7 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     chrome.bookmarks.getTree((treeNodes) => {
-        bookmarkTreeNodes = treeNodes; // Store the original tree
+        bookmarkTreeNodes = treeNodes;
         collectAllBookmarks(treeNodes);
         renderBookmarks();
     });
