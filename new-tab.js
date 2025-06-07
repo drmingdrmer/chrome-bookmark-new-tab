@@ -1,5 +1,6 @@
 // Global bookmarks store
 const allBookmarks = {};
+let bookmarkTreeNodes = null; // Store the original bookmark tree
 let config = {
     maxEntriesPerColumn: 10,
 };
@@ -112,6 +113,38 @@ function collectAllBookmarks(nodes) {
     });
 }
 
+// Helper function to get folders in the correct order from the bookmark tree
+function getOrderedTopLevelFolders() {
+    if (!bookmarkTreeNodes) return [];
+
+    const orderedFolders = [];
+    const directBookmarks = [];
+
+    // Find Bookmarks Bar and Other Bookmarks in the tree
+    bookmarkTreeNodes.forEach(rootNode => {
+        if (rootNode.children) {
+            rootNode.children.forEach(node => {
+                if (node.id === '1' || node.id === '2') { // Bookmarks Bar or Other Bookmarks
+                    if (node.children) {
+                        node.children.forEach(child => {
+                            const item = allBookmarks[child.id];
+                            if (item) {
+                                if (item.isFolder) {
+                                    orderedFolders.push(item);
+                                } else {
+                                    directBookmarks.push(item);
+                                }
+                            }
+                        });
+                    }
+                }
+            });
+        }
+    });
+
+    return { folders: orderedFolders, directBookmarks };
+}
+
 function renderBookmarks() {
     const container = document.getElementById('bookmarks-container');
     container.innerHTML = '';
@@ -122,16 +155,8 @@ function renderBookmarks() {
     // Remove search mode class when returning to normal view
     document.body.classList.remove('search-mode');
 
-    // Get folders to display - direct children of Bookmarks Bar (id='1') and Other Bookmarks (id='2')
-    // Don't include the root folders themselves to avoid duplication
-    const topLevelFolders = Object.values(allBookmarks).filter(item =>
-        item.isFolder && (item.parentId === '1' || item.parentId === '2'),
-    );
-
-    // Also get direct bookmarks (not in folders) from Bookmarks Bar and Other Bookmarks
-    const directBookmarks = Object.values(allBookmarks).filter(item =>
-        !item.isFolder && (item.parentId === '1' || item.parentId === '2'),
-    );
+    // Get folders in correct order from the bookmark tree
+    const { folders: topLevelFolders, directBookmarks } = getOrderedTopLevelFolders();
 
     // If there are direct bookmarks, create a column for them
     if (directBookmarks.length > 0) {
@@ -1016,8 +1041,9 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     });
 
-    chrome.bookmarks.getTree((bookmarkTreeNodes) => {
-        collectAllBookmarks(bookmarkTreeNodes);
+    chrome.bookmarks.getTree((treeNodes) => {
+        bookmarkTreeNodes = treeNodes; // Store the original tree
+        collectAllBookmarks(treeNodes);
         renderBookmarks();
     });
 
