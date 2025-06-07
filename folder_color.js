@@ -18,9 +18,7 @@ function getFolderColor(folderId, allBookmarks) {
     const colorKey = folder.title;
 
     // Return existing color if already assigned
-    if (folderColors[colorKey]) {
-        return folderColors[colorKey];
-    }
+    if (folderColors[colorKey]) return folderColors[colorKey];
 
     // Assign a new color from the palette
     const colorIndex = Object.keys(folderColors).length % colorPalette.length;
@@ -36,7 +34,4 @@ function resetFolderColors() {
 }
 
 // Export folder color functions and variables
-export {
-    getFolderColor,
-    resetFolderColors,
-}; 
+export { getFolderColor, resetFolderColors }; 

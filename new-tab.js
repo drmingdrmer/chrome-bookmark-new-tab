@@ -15,7 +15,6 @@ const allBookmarks = {};
 let bookmarkTreeNodes = null;
 let config = { maxEntriesPerColumn: 10 };
 
-
 function createBookmarkElement(bookmark) {
     // Create container with bookmark content and prepare for delete button
     const container = div('bookmark-item', {}, []);
@@ -47,32 +46,27 @@ function createBookmarkElement(bookmark) {
         div('bookmark-url', { textContent: bookmark.url }),
     ]);
 
-    // Add drag handle and content to container
-    container.appendChild(dragHandle);
-    container.appendChild(bookmarkContent);
-
     // Always create delete button regardless of search mode
     // Create delete button
-    const deleteBtn = createElement('button',
-        {
-            className: 'delete-button',
-            'aria-label': 'Delete bookmark',
-            textContent: '×',
-            tabindex: '-1',
-        },
-    );
+    const deleteBtn = createElement('button', {
+        className: 'delete-button',
+        'aria-label': 'Delete bookmark',
+        textContent: '×',
+        tabindex: '-1',
+    });
 
     deleteBtn.addEventListener('click', (e) => {
         e.preventDefault();
         e.stopPropagation();
-
         // Use native confirm dialog
         if (confirm(`Delete "${bookmark.title}"?`)) {
             deleteBookmark(bookmark.id);
         }
     });
 
-    // Add delete button to the container
+    // Add drag handle and content to container
+    container.appendChild(dragHandle);
+    container.appendChild(bookmarkContent);
     container.appendChild(deleteBtn);
 
     // Set data attributes to help with drag operations
@@ -151,8 +145,6 @@ function renderBookmarks() {
     // Reset folder colors on re-render
     resetFolderColors();
 
-
-
     // Get folders in correct order from the bookmark tree
     const { folders: topLevelFolders, directBookmarks } = getOrderedTopLevelFolders();
 
@@ -160,7 +152,10 @@ function renderBookmarks() {
     if (directBookmarks.length > 0) {
         const chunks = chunkArray(directBookmarks, config.maxEntriesPerColumn);
         chunks.forEach((chunk, index) => {
-            const subtitle = chunks.length > 1 ? `Direct bookmarks (${index + 1}/${chunks.length})` : null;
+            let subtitle = null;
+            if (chunks.length > 1) {
+                subtitle = `Direct bookmarks (${index + 1}/${chunks.length})`;
+            }
             const { column, content } = createFolderColumn('Direct bookmarks', subtitle);
 
             chunk.forEach(bookmark => {
@@ -181,11 +176,8 @@ function renderBookmarks() {
         if (itemCount <= config.maxEntriesPerColumn) {
             // Create a single column for this folder
             const folderColumn = createFolderColumn(folder.title, null, folder.id);
-
             // Add all items to the column (don't skip subfolders since we're not splitting)
             processBookmarksInFolder(folder.children, folderColumn.content, false);
-
-            // Add the column to the container
             container.appendChild(folderColumn.column);
         } else {
             // We need to split this folder into multiple columns
@@ -203,10 +195,8 @@ function countItemsInFolder(folder) {
         if (!item) return;
 
         if (item.isFolder) {
-            // Add the subfolder count
             count += countItemsInFolder(item);
         } else {
-            // Add this bookmark
             count++;
         }
     });
@@ -221,13 +211,11 @@ function createFolderColumn(title, subtitle = null, folderId = null) {
     if (folderId) {
         const color = getFolderColor(folderId, allBookmarks);
         folderColumn.style.backgroundColor = color;
-
         // Store folder ID as data attribute for drag operations
         folderColumn.dataset.folderId = folderId;
     }
 
     const folderHeader = textDiv('folder-header', title);
-
     if (subtitle) {
         folderHeader.appendChild(textSpan('folder-subheader', subtitle));
     }
@@ -263,7 +251,12 @@ function splitFolderIntoColumns(folder, container) {
         const chunkedBookmarks = chunkArray(directBookmarks, config.maxEntriesPerColumn);
 
         chunkedBookmarks.forEach((chunk, index) => {
-            const subtitle = chunkedBookmarks.length > 1 ? `Direct links (${index + 1}/${chunkedBookmarks.length})` : 'Direct links';
+            let subtitle;
+            if (chunkedBookmarks.length > 1) {
+                subtitle = `Direct links (${index + 1}/${chunkedBookmarks.length})`;
+            } else {
+                subtitle = 'Direct links';
+            }
             // For direct links, use folder.id to maintain the same color across direct links sections
             const { column, content } = createFolderColumn(folder.title, subtitle, folder.id);
 
@@ -389,8 +382,6 @@ function filterBookmarks(searchTerm) {
         return;
     }
 
-
-
     // Reset folder colors for search
     resetFolderColors();
 
@@ -415,9 +406,7 @@ function filterBookmarks(searchTerm) {
 
     // If no matches at all
     if (matchingFolders.length === 0 && matchingBookmarks.length === 0) {
-        const noResults = div('no-results', {
-            textContent: 'No bookmarks or folders found',
-        });
+        const noResults = div('no-results', { textContent: 'No bookmarks or folders found' });
         container.appendChild(noResults);
         return;
     }
@@ -432,56 +421,52 @@ function filterBookmarks(searchTerm) {
     const allResults = [];
 
     // Add matching folders first
-    if (matchingFolders.length > 0) {
-        matchingFolders.forEach(folder => {
-            // Get folder path
-            const folderPath = getFolderPath(folder);
-            const pathDisplay = folderPath.map(f => f.title).join(' > ');
+    matchingFolders.forEach(folder => {
+        // Get folder path
+        const folderPath = getFolderPath(folder);
+        const pathDisplay = folderPath.map(f => f.title).join(' > ');
 
-            // Create a column for this folder
-            const { column, content } = createFolderColumn(folder.title, pathDisplay, folder.id);
+        // Create a column for this folder
+        const { column, content } = createFolderColumn(folder.title, pathDisplay, folder.id);
 
-            // Highlight the folder name in the header
-            const folderHeader = column.querySelector('.folder-header');
-            highlightText(folderHeader, searchTerm);
+        // Highlight the folder name in the header
+        const folderHeader = column.querySelector('.folder-header');
+        highlightText(folderHeader, searchTerm);
 
-            // Show contents of the folder (limited to avoid overwhelming)
-            const MAX_ITEMS_TO_SHOW = 10;
-            let itemCount = 0;
+        // Show contents of the folder (limited to avoid overwhelming)
+        const MAX_ITEMS_TO_SHOW = 10;
+        let itemCount = 0;
 
-            if (folder.children && folder.children.length > 0) {
-                folder.children.forEach(childId => {
-                    if (itemCount >= MAX_ITEMS_TO_SHOW) return;
+        if (folder.children && folder.children.length > 0) {
+            folder.children.forEach(childId => {
+                if (itemCount >= MAX_ITEMS_TO_SHOW) return;
 
-                    const item = allBookmarks[childId];
-                    if (!item) return;
+                const item = allBookmarks[childId];
+                if (!item) return;
 
-                    if (!item.isFolder) {
-                        // Add bookmark with search mode enabled
-                        const bookmarkElement = createBookmarkElement(item);
-                        content.appendChild(bookmarkElement);
-                        itemCount++;
-                    }
-                });
-
-                // Add "see more" link if needed
-                if (folder.children.length > MAX_ITEMS_TO_SHOW) {
-                    const remaining = folder.children.length - MAX_ITEMS_TO_SHOW;
-                    const moreText = div('more-items-text', {
-                        textContent: `+${remaining} more item${remaining > 1 ? 's' : ''}`
-                    });
-                    content.appendChild(moreText);
+                if (!item.isFolder) {
+                    // Add bookmark with search mode enabled
+                    const bookmarkElement = createBookmarkElement(item);
+                    content.appendChild(bookmarkElement);
+                    itemCount++;
                 }
-            } else {
-                const emptyNote = div('empty-folder-note', {
-                    textContent: 'Empty folder',
-                });
-                content.appendChild(emptyNote);
-            }
+            });
 
-            allResults.push(column);
-        });
-    }
+            // Add "see more" link if needed
+            if (folder.children.length > MAX_ITEMS_TO_SHOW) {
+                const remaining = folder.children.length - MAX_ITEMS_TO_SHOW;
+                const moreText = div('more-items-text', {
+                    textContent: `+${remaining} more item${remaining > 1 ? 's' : ''}`
+                });
+                content.appendChild(moreText);
+            }
+        } else {
+            const emptyNote = div('empty-folder-note', { textContent: 'Empty folder' });
+            content.appendChild(emptyNote);
+        }
+
+        allResults.push(column);
+    });
 
     // Add matching bookmarks
     if (matchingBookmarks.length > 0) {
@@ -496,15 +481,10 @@ function filterBookmarks(searchTerm) {
 
             if (!folderKeys.has(folderKey)) {
                 folderKeys.add(folderKey);
-                folderGroups.push({
-                    path: folderPath,
-                    bookmarks: [],
-                });
+                folderGroups.push({ path: folderPath, bookmarks: [] });
             }
 
-            const group = folderGroups.find(g =>
-                g.path.map(f => f.id).join('-') === folderKey
-            );
+            const group = folderGroups.find(g => g.path.map(f => f.id).join('-') === folderKey);
             group.bookmarks.push(bookmark);
         });
 
@@ -513,7 +493,10 @@ function filterBookmarks(searchTerm) {
             const { path, bookmarks } = group;
 
             // Get the top-level folder to use for coloring
-            const topFolderId = path.length > 0 ? path[0].id : null;
+            let topFolderId = null;
+            if (path.length > 0) {
+                topFolderId = path[0].id;
+            }
 
             // Create folder column with color
             const folderColumn = div('folder-column');
@@ -528,18 +511,32 @@ function filterBookmarks(searchTerm) {
             const folderHeader = div('folder-header');
 
             // Format the path for display - use last folder as title
-            const folderTitle = path.length > 0 ? path[path.length - 1].title : 'Direct bookmarks';
-            const fullPath = path.length > 1 ? path.slice(0, -1).map(f => f.title).join(' > ') : null;
+            let folderTitle;
+            if (path.length > 0) {
+                folderTitle = path[path.length - 1].title;
+            } else {
+                folderTitle = 'Direct bookmarks';
+            }
+
+            let fullPath = null;
+            if (path.length > 1) {
+                fullPath = path.slice(0, -1).map(f => f.title).join(' > ');
+            }
 
             folderHeader.textContent = folderTitle;
 
             // Add path and match count as subheader
-            if (fullPath || bookmarks.length > 1) {
-                const subheaderText = [];
-                if (fullPath) subheaderText.push(fullPath);
-                if (bookmarks.length > 1) subheaderText.push(`${bookmarks.length} matches`);
+            const subheaderParts = [];
+            if (fullPath) {
+                subheaderParts.push(fullPath);
+            }
+            if (bookmarks.length > 1) {
+                subheaderParts.push(`${bookmarks.length} matches`);
+            }
 
-                const subheader = textSpan('folder-subheader', subheaderText.join(' • '));
+            if (subheaderParts.length > 0) {
+                const subheaderText = subheaderParts.join(' • ');
+                const subheader = textSpan('folder-subheader', subheaderText);
                 folderHeader.appendChild(subheader);
             }
 
@@ -579,7 +576,6 @@ function getFolderPath(folder) {
     while (currentId) {
         const parentFolder = allBookmarks[currentId];
         if (!parentFolder) break;
-
         path.unshift(parentFolder); // Add to beginning of array
         currentId = parentFolder.parentId;
     }
@@ -596,7 +592,6 @@ function getBookmarkFolderPath(bookmark) {
     while (currentId) {
         const folder = allBookmarks[currentId];
         if (!folder) break;
-
         path.unshift(folder); // Add to beginning of array
         currentId = folder.parentId;
     }
@@ -617,13 +612,15 @@ function highlightText(element, searchTerm) {
         urlElement = element.querySelector('.bookmark-url');
     }
 
-    if (!textElement || !textElement.textContent) return;
+    function highlightInElement(el, search) {
+        if (!el || !el.textContent) return;
 
-    const text = textElement.textContent;
-    const lcText = text.toLowerCase();
-    const lcSearch = searchTerm.toLowerCase();
+        const text = el.textContent;
+        const lcText = text.toLowerCase();
+        const lcSearch = search.toLowerCase();
 
-    if (lcText.includes(lcSearch)) {
+        if (!lcText.includes(lcSearch)) return;
+
         // Find all occurrences
         const parts = [];
         let lastIndex = 0;
@@ -632,18 +629,12 @@ function highlightText(element, searchTerm) {
         while (startIndex !== -1) {
             // Add text before match
             if (startIndex > lastIndex) {
-                parts.push({
-                    text: text.substring(lastIndex, startIndex),
-                    isMatch: false,
-                });
+                parts.push({ text: text.substring(lastIndex, startIndex), isMatch: false });
             }
 
             // Add match
             const endIndex = startIndex + lcSearch.length;
-            parts.push({
-                text: text.substring(startIndex, endIndex),
-                isMatch: true,
-            });
+            parts.push({ text: text.substring(startIndex, endIndex), isMatch: true });
 
             lastIndex = endIndex;
             startIndex = lcText.indexOf(lcSearch, lastIndex);
@@ -651,14 +642,11 @@ function highlightText(element, searchTerm) {
 
         // Add any remaining text
         if (lastIndex < text.length) {
-            parts.push({
-                text: text.substring(lastIndex),
-                isMatch: false,
-            });
+            parts.push({ text: text.substring(lastIndex), isMatch: false });
         }
 
         // Clear element and add highlighted content
-        textElement.innerHTML = '';
+        el.innerHTML = '';
         parts.forEach(part => {
             if (part.isMatch) {
                 const highlight = document.createElement('span');
@@ -666,72 +654,17 @@ function highlightText(element, searchTerm) {
                 highlight.style.padding = '0 2px';
                 highlight.style.borderRadius = '2px';
                 highlight.textContent = part.text;
-                textElement.appendChild(highlight);
+                el.appendChild(highlight);
             } else {
                 const textNode = document.createTextNode(part.text);
-                textElement.appendChild(textNode);
+                el.appendChild(textNode);
             }
         });
     }
 
-    // Also highlight URL if it exists and contains the search term
-    if (urlElement && urlElement.textContent) {
-        const urlText = urlElement.textContent;
-        const lcUrlText = urlText.toLowerCase();
-
-        if (lcUrlText.includes(lcSearch)) {
-            // Find all occurrences in URL
-            const urlParts = [];
-            let lastIndex = 0;
-            let startIndex = lcUrlText.indexOf(lcSearch);
-
-            while (startIndex !== -1) {
-                // Add text before match
-                if (startIndex > lastIndex) {
-                    urlParts.push({
-                        text: urlText.substring(lastIndex, startIndex),
-                        isMatch: false,
-                    });
-                }
-
-                // Add match
-                const endIndex = startIndex + lcSearch.length;
-                urlParts.push({
-                    text: urlText.substring(startIndex, endIndex),
-                    isMatch: true,
-                });
-
-                lastIndex = endIndex;
-                startIndex = lcUrlText.indexOf(lcSearch, lastIndex);
-            }
-
-            // Add any remaining text
-            if (lastIndex < urlText.length) {
-                urlParts.push({
-                    text: urlText.substring(lastIndex),
-                    isMatch: false,
-                });
-            }
-
-            // Clear element and add highlighted content
-            urlElement.innerHTML = '';
-            urlParts.forEach(part => {
-                if (part.isMatch) {
-                    const highlight = document.createElement('span');
-                    highlight.style.backgroundColor = 'rgba(255, 255, 100, 0.3)';
-                    highlight.style.padding = '0 2px';
-                    highlight.style.borderRadius = '2px';
-                    highlight.textContent = part.text;
-                    urlElement.appendChild(highlight);
-                } else {
-                    const textNode = document.createTextNode(part.text);
-                    urlElement.appendChild(textNode);
-                }
-            });
-        }
-    }
+    highlightInElement(textElement, searchTerm);
+    highlightInElement(urlElement, searchTerm);
 }
-
 
 function deleteBookmark(id) {
     chrome.bookmarks.remove(id, () => {
@@ -757,10 +690,8 @@ function deleteBookmark(id) {
         // Refresh the view
         const searchBox = document.getElementById('searchBox');
         if (searchBox.value.trim()) {
-            // If search is active, re-filter
             filterBookmarks(searchBox.value);
         } else {
-            // Otherwise just render normally
             renderBookmarks();
         }
     });

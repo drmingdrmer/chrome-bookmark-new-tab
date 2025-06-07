@@ -22,6 +22,8 @@ function handleDragStart(e, bookmark, allBookmarks) {
     const parentFolder = allBookmarks[bookmark.parentId];
     if (parentFolder && parentFolder.children) {
         dragOperation.originalIndex = parentFolder.children.indexOf(bookmark.id);
+    } else {
+        dragOperation.originalIndex = -1;
     }
 
     // Set drag effects and data
@@ -136,28 +138,7 @@ function handleDrop(e, targetBookmark, allBookmarks, updateBookmarkOrder, filter
     }
 
     // Move the bookmark
-    chrome.bookmarks.move(draggedId, {
-        parentId: parentId,
-        index: newIndex,
-    }, () => {
-        if (chrome.runtime.lastError) {
-            console.error('Error moving bookmark:', chrome.runtime.lastError);
-            resetDragState();
-            return;
-        }
-
-        // Update our local data structure
-        updateBookmarkOrder(draggedId, parentId, newIndex, allBookmarks);
-
-        // Re-render bookmarks
-        const searchBox = document.getElementById('searchBox');
-        if (searchBox.value.trim()) {
-            filterBookmarks(searchBox.value);
-        } else {
-            renderBookmarks();
-        }
-    });
-
+    performBookmarkMove(draggedId, parentId, newIndex, allBookmarks, updateBookmarkOrder, filterBookmarks, renderBookmarks);
     resetDragState();
 }
 
@@ -185,9 +166,17 @@ function handleEmptyFolderDrop(e, container, folderId, allBookmarks, updateBookm
     if (!draggedBookmark) return;
 
     // Move the bookmark to this folder
-    chrome.bookmarks.move(draggedId, {
-        parentId: folderId,
-        index: 0,  // Add to beginning of folder
+    performBookmarkMove(draggedId, folderId, 0, allBookmarks, updateBookmarkOrder, filterBookmarks, renderBookmarks);
+    resetDragState();
+}
+
+/**
+ * Performs the bookmark move operation
+ */
+function performBookmarkMove(bookmarkId, parentId, index, allBookmarks, updateBookmarkOrder, filterBookmarks, renderBookmarks) {
+    chrome.bookmarks.move(bookmarkId, {
+        parentId: parentId,
+        index: index
     }, () => {
         if (chrome.runtime.lastError) {
             console.error('Error moving bookmark:', chrome.runtime.lastError);
@@ -196,7 +185,7 @@ function handleEmptyFolderDrop(e, container, folderId, allBookmarks, updateBookm
         }
 
         // Update our local data structure
-        updateBookmarkOrder(draggedId, folderId, 0, allBookmarks);
+        updateBookmarkOrder(bookmarkId, parentId, index, allBookmarks);
 
         // Re-render bookmarks
         const searchBox = document.getElementById('searchBox');
@@ -206,8 +195,6 @@ function handleEmptyFolderDrop(e, container, folderId, allBookmarks, updateBookm
             renderBookmarks();
         }
     });
-
-    resetDragState();
 }
 
 /**

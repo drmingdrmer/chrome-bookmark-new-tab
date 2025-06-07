@@ -28,12 +28,10 @@ function createElement(tag, attributes = {}, children = []) {
 
     // Set attributes
     Object.entries(attributes).forEach(([key, value]) => {
-        if (key === 'className') {
-            element.className = value;
-        } else if (key === 'textContent') {
-            element.textContent = value;
-        } else if (key === 'innerHTML') {
-            element.innerHTML = value;
+        if (['className', 'textContent', 'innerHTML'].includes(key)) {
+            element[key] = value;
+        } else if (key.startsWith('on') && typeof value === 'function') {
+            element.addEventListener(key.slice(2), value);
         } else {
             element.setAttribute(key, value);
         }
@@ -62,7 +60,7 @@ function textSpan(className, text, additionalAttributes = {}) {
     return createElement('span', {
         className,
         textContent: text,
-        ...additionalAttributes,
+        ...additionalAttributes
     });
 }
 
@@ -76,7 +74,7 @@ function textSpan(className, text, additionalAttributes = {}) {
 function div(className, additionalAttributes = {}, children = []) {
     return createElement('div', {
         className,
-        ...additionalAttributes,
+        ...additionalAttributes
     }, children);
 }
 
@@ -91,7 +89,7 @@ function textDiv(className, text, additionalAttributes = {}) {
     return createElement('div', {
         className,
         textContent: text,
-        ...additionalAttributes,
+        ...additionalAttributes
     });
 }
 
