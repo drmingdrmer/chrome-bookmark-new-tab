@@ -122,10 +122,31 @@ function renderBookmarks() {
     // Remove search mode class when returning to normal view
     document.body.classList.remove('search-mode');
 
-    // Get top-level folders
+    // Get folders to display - direct children of Bookmarks Bar (id='1') and Other Bookmarks (id='2')
+    // Don't include the root folders themselves to avoid duplication
     const topLevelFolders = Object.values(allBookmarks).filter(item =>
-        item.isFolder && (item.parentId === '0' || item.parentId === '1'),
+        item.isFolder && (item.parentId === '1' || item.parentId === '2'),
     );
+
+    // Also get direct bookmarks (not in folders) from Bookmarks Bar and Other Bookmarks
+    const directBookmarks = Object.values(allBookmarks).filter(item =>
+        !item.isFolder && (item.parentId === '1' || item.parentId === '2'),
+    );
+
+    // If there are direct bookmarks, create a column for them
+    if (directBookmarks.length > 0) {
+        const chunks = chunkArray(directBookmarks, config.maxEntriesPerColumn);
+        chunks.forEach((chunk, index) => {
+            const subtitle = chunks.length > 1 ? `Direct bookmarks (${index + 1}/${chunks.length})` : null;
+            const { column, content } = createFolderColumn('Direct bookmarks', subtitle);
+
+            chunk.forEach(bookmark => {
+                content.appendChild(createBookmarkElement(bookmark));
+            });
+
+            container.appendChild(column);
+        });
+    }
 
     // Process each top-level folder
     topLevelFolders.forEach(folder => {
@@ -138,8 +159,8 @@ function renderBookmarks() {
             // Create a single column for this folder
             const folderColumn = createFolderColumn(folder.title, null, folder.id);
 
-            // Add all items to the column
-            processBookmarksInFolder(folder.children, folderColumn.content);
+            // Add all items to the column (don't skip subfolders since we're not splitting)
+            processBookmarksInFolder(folder.children, folderColumn.content, false);
 
             // Add the column to the container
             container.appendChild(folderColumn.column);
@@ -239,7 +260,8 @@ function splitFolderIntoColumns(folder, container) {
             // This subfolder fits in one column
             // For subfolders, use the subfolder's ID to get different colors for different subfolders
             const { column, content } = createFolderColumn(folder.title, subfolder.title, subfolder.id);
-            processBookmarksInFolder(subfolder.children, content);
+            // Skip subfolders to avoid duplication since we handle subfolders separately in splitFolderIntoColumns
+            processBookmarksInFolder(subfolder.children, content, true);
             container.appendChild(column);
         } else {
             // This subfolder needs to be split
@@ -294,13 +316,16 @@ function chunkArray(array, chunkSize) {
     return chunks;
 }
 
-function processBookmarksInFolder(childIds, container) {
+function processBookmarksInFolder(childIds, container, skipSubfolders = false) {
     // Process items in order
     childIds.forEach(childId => {
         const item = allBookmarks[childId];
         if (!item) return;
 
         if (item.isFolder) {
+            // Skip subfolders if we're processing them separately (to avoid duplication)
+            if (skipSubfolders) return;
+
             // This is a subfolder, add a header
             const subfolderHeader = textDiv('subfolder', item.title);
             container.appendChild(subfolderHeader);
