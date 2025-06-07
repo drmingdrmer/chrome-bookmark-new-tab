@@ -312,6 +312,41 @@ body::before {
     opacity: 0.7;
 }
 
+.search-info {
+    grid-column: 1 / -1;
+    padding: 10px 15px;
+    margin-bottom: 10px;
+    background-color: rgba(0, 120, 212, 0.1);
+    border: 1px solid rgba(0, 120, 212, 0.3);
+    border-radius: 4px;
+    font-size: 13px;
+    color: rgba(255, 255, 255, 0.8);
+}
+
+.no-results {
+    grid-column: 1 / -1;
+    padding: 40px 20px;
+    text-align: center;
+    color: rgba(255, 255, 255, 0.6);
+    font-size: 14px;
+}
+
+.more-items-text {
+    padding: 5px 10px;
+    font-size: 11px;
+    color: rgba(255, 255, 255, 0.5);
+    font-style: italic;
+    text-align: center;
+}
+
+.empty-folder-note {
+    padding: 10px;
+    font-size: 12px;
+    color: rgba(255, 255, 255, 0.4);
+    font-style: italic;
+    text-align: center;
+}
+
 .delete-button:hover {
     opacity: 1;
     background-color: #ff0000;
