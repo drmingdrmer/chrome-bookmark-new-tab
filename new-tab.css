@@ -97,6 +97,12 @@ body::before {
     display: block;
 }
 
+.search-box:focus {
+    outline: 2px solid #0078d4;
+    outline-offset: 2px;
+    background-color: rgba(0, 0, 0, 0.8);
+}
+
 .search-box::placeholder {
     color: rgba(255, 255, 255, 0.6);
 }
@@ -171,6 +177,13 @@ body::before {
     align-items: center;
     z-index: 1;
     transition: transform 0.1s ease-in-out, box-shadow 0.1s ease-in-out;
+}
+
+.bookmark-item:focus-within {
+    outline: 2px solid #0078d4;
+    outline-offset: 2px;
+    border-radius: 4px;
+    background-color: rgba(0, 120, 212, 0.1);
 }
 
 .bookmark-item.dragging {
@@ -257,6 +270,15 @@ body::before {
     text-overflow: ellipsis;
     font-size: 13px;
     border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.bookmark-link:focus {
+    outline: none;
+    background-color: rgba(255, 255, 255, 0.2);
+}
+
+.bookmark-link:focus+.bookmark-url {
+    background-color: rgba(255, 255, 255, 0.2);
 }
 
 .bookmark-url {

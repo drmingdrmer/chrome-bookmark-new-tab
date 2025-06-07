@@ -30,6 +30,7 @@ function createBookmarkElement(bookmark) {
         draggable: true,
         'aria-label': 'Drag to reorder',
         title: 'Drag to reorder',
+        tabindex: '-1',
     });
 
     // Add grip icon to the drag handle (using a simple 3-dots design)
@@ -61,6 +62,7 @@ function createBookmarkElement(bookmark) {
             className: 'delete-button',
             'aria-label': 'Delete bookmark',
             textContent: '×',
+            tabindex: '-1',
         },
     );
 
