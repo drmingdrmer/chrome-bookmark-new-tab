@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>拖拽功能测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            padding: 20px;
+            background: #1a1a1a;
+            color: white;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .draggable-item {
+            padding: 15px;
+            margin: 10px 0;
+            background: #333;
+            border-radius: 8px;
+            cursor: move;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            transition: all 0.3s;
+        }
+
+        .draggable-item:hover {
+            background: #444;
+        }
+
+        .draggable-item.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+
+        .draggable-item.drag-over {
+            border: 2px solid #3b82f6;
+            background: #3b82f6/20;
+        }
+
+        .drag-handle {
+            width: 20px;
+            height: 20px;
+            background: #666;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .content {
+            flex: 1;
+        }
+
+        .log {
+            margin-top: 20px;
+            padding: 10px;
+            background: #222;
+            border-radius: 8px;
+            font-family: monospace;
+            font-size: 14px;
+            max-height: 200px;
+            overflow-y: auto;
+        }
+
+        .log-entry {
+            margin: 2px 0;
+        }
+
+        .success {
+            color: #4ade80;
+        }
+
+        .error {
+            color: #f87171;
+        }
+
+        .info {
+            color: #60a5fa;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>拖拽功能测试</h1>
+
+        <div id="items-container">
+            <div class="draggable-item" draggable="true" data-id="1">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="content">
+                    <strong>书签 1</strong>
+                    <br>
+                    <small>https://example1.com</small>
+                </div>
+            </div>
+
+            <div class="draggable-item" draggable="true" data-id="2">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="content">
+                    <strong>书签 2</strong>
+                    <br>
+                    <small>https://example2.com</small>
+                </div>
+            </div>
+
+            <div class="draggable-item" draggable="true" data-id="3">
+                <div class="drag-handle">⋮⋮</div>
+                <div class="content">
+                    <strong>书签 3</strong>
+                    <br>
+                    <small>https://example3.com</small>
+                </div>
+            </div>
+        </div>
+
+        <div class="log" id="log">
+            <div class="log-entry info">等待拖拽操作...</div>
+        </div>
+    </div>
+
+    <script>
+        const log = document.getElementById('log');
+
+        function addLog(message, type = 'info') {
+            const entry = document.createElement('div');
+            entry.className = `log-entry ${type}`;
+            entry.textContent = `${new Date().toLocaleTimeString()} - ${message}`;
+            log.appendChild(entry);
+            log.scrollTop = log.scrollHeight;
+        }
+
+        // 获取所有可拖拽元素
+        const draggableItems = document.querySelectorAll('.draggable-item');
+
+        draggableItems.forEach(item => {
+            // 拖拽开始
+            item.addEventListener('dragstart', (e) => {
+                const id = e.currentTarget.dataset.id;
+                addLog(`🚀 拖拽开始: 书签 ${id}`, 'success');
+
+                e.dataTransfer.effectAllowed = 'move';
+                e.dataTransfer.setData('text/plain', id);
+
+                e.currentTarget.classList.add('dragging');
+            });
+
+            // 拖拽结束
+            item.addEventListener('dragend', (e) => {
+                const id = e.currentTarget.dataset.id;
+                addLog(`🏁 拖拽结束: 书签 ${id}`, 'info');
+
+                e.currentTarget.classList.remove('dragging');
+
+                // 清理所有drag-over类
+                document.querySelectorAll('.drag-over').forEach(el => {
+                    el.classList.remove('drag-over');
+                });
+            });
+
+            // 拖拽经过
+            item.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                e.dataTransfer.dropEffect = 'move';
+
+                if (!e.currentTarget.classList.contains('dragging')) {
+                    e.currentTarget.classList.add('drag-over');
+                }
+            });
+
+            // 拖拽离开
+            item.addEventListener('dragleave', (e) => {
+                e.currentTarget.classList.remove('drag-over');
+            });
+
+            // 拖拽放下
+            item.addEventListener('drop', (e) => {
+                e.preventDefault();
+
+                const draggedId = e.dataTransfer.getData('text/plain');
+                const targetId = e.currentTarget.dataset.id;
+
+                if (draggedId === targetId) {
+                    addLog(`❌ 不能拖拽到自己`, 'error');
+                    return;
+                }
+
+                addLog(`📦 拖拽放下: 书签 ${draggedId} -> 书签 ${targetId}`, 'success');
+
+                // 获取拖拽的元素
+                const draggedElement = document.querySelector(`[data-id="${draggedId}"]`);
+                const targetElement = e.currentTarget;
+
+                // 获取容器
+                const container = document.getElementById('items-container');
+
+                // 判断是放在前面还是后面
+                const rect = targetElement.getBoundingClientRect();
+                const midY = rect.top + rect.height / 2;
+                const dropBefore = e.clientY < midY;
+
+                // 移动元素
+                if (dropBefore) {
+                    container.insertBefore(draggedElement, targetElement);
+                    addLog(`✅ 移动到书签 ${targetId} 之前`, 'success');
+                } else {
+                    container.insertBefore(draggedElement, targetElement.nextSibling);
+                    addLog(`✅ 移动到书签 ${targetId} 之后`, 'success');
+                }
+
+                // 清理样式
+                targetElement.classList.remove('drag-over');
+            });
+        });
+
+        // 测试拖拽API是否可用
+        addLog('拖拽API状态: ' + (typeof DragEvent !== 'undefined' ? '✅ 可用' : '❌ 不可用'), 'info');
+    </script>
+</body>
+
+</html>
