@@ -1,173 +1,244 @@
+const puppeteer = require('puppeteer');
 const path = require('path');
 
 /**
- * 创建带有Chrome扩展的浏览器上下文
+ * Puppeteer测试工具类
  */
-async function createExtensionContext(browser) {
-    const extensionPath = path.join(__dirname, '..');
-
-    const context = await browser.newContext({
-        args: [
-            `--load-extension=${extensionPath}`,
-            `--disable-extensions-except=${extensionPath}`,
-            '--no-sandbox',
-            '--disable-web-security'
-        ]
-    });
-
-    return context;
-}
-
-/**
- * 等待元素可见
- */
-async function waitForElement(page, selector, timeout = 5000) {
-    try {
-        await page.waitForSelector(selector, {
-            state: 'visible',
-            timeout
-        });
-        return true;
-    } catch (error) {
-        console.warn(`Element ${selector} not found within ${timeout}ms`);
-        return false;
+class ExtensionTester {
+    constructor() {
+        this.browser = null;
+        this.extensionPath = path.resolve(__dirname, '..');
     }
-}
 
-/**
- * 等待页面加载完成
- */
-async function waitForPageLoad(page, timeout = 10000) {
-    try {
-        await page.waitForLoadState('networkidle', { timeout });
-        return true;
-    } catch (error) {
-        console.warn(`Page did not reach networkidle state within ${timeout}ms`);
-        // 尝试至少等待domcontentloaded
+    /**
+     * 启动带有扩展的Chrome浏览器
+     */
+    async launchBrowser(options = {}) {
+        const defaultOptions = {
+            headless: false, // Chrome扩展需要非headless模式
+            devtools: false,
+            args: [
+                `--load-extension=${this.extensionPath}`,
+                `--disable-extensions-except=${this.extensionPath}`,
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-web-security',
+                '--disable-features=VizDisplayCompositor',
+                `--user-data-dir=/tmp/puppeteer-chrome-extension-${Date.now()}`
+            ],
+            ...options
+        };
+
+        this.browser = await puppeteer.launch(defaultOptions);
+        return this.browser;
+    }
+
+    /**
+     * 获取扩展ID
+     */
+    async getExtensionId() {
+        if (!this.browser) {
+            throw new Error('Browser not launched. Call launchBrowser() first.');
+        }
+
+        const page = await this.browser.newPage();
+        await page.goto('chrome://extensions/');
+
+        // 获取扩展ID
+        const extensionId = await page.evaluate(() => {
+            const extensions = document.querySelectorAll('extensions-item');
+            for (const ext of extensions) {
+                const name = ext.shadowRoot.querySelector('#name')?.textContent;
+                if (name && name.includes('Bookmark New Tab')) {
+                    return ext.getAttribute('id');
+                }
+            }
+            return null;
+        });
+
+        await page.close();
+        return extensionId;
+    }
+
+    /**
+     * 创建新标签页并导航到扩展页面
+     */
+    async createNewTab() {
+        if (!this.browser) {
+            throw new Error('Browser not launched. Call launchBrowser() first.');
+        }
+
+        const page = await this.browser.newPage();
+
+        // 直接导航到chrome://newtab/ 
+        // 如果扩展正确加载，应该会显示我们的扩展页面
+        await page.goto('chrome://newtab/');
+
+        // 等待页面加载
+        await page.waitForTimeout(2000);
+
+        return page;
+    }
+
+    /**
+     * 等待元素出现
+     */
+    async waitForElement(page, selector, timeout = 5000) {
         try {
-            await page.waitForLoadState('domcontentloaded', { timeout: 5000 });
+            await page.waitForSelector(selector, { timeout });
             return true;
-        } catch (domError) {
-            console.warn('Page did not reach domcontentloaded state');
+        } catch (error) {
             return false;
         }
     }
-}
 
-/**
- * 检查JavaScript错误
- */
-async function checkForJSErrors(page) {
-    const errors = [];
+    /**
+     * 注入模拟的Chrome API
+     */
+    async injectMockChromeAPI(page) {
+        await page.evaluateOnNewDocument(() => {
+            // 模拟Chrome扩展API
+            window.chrome = {
+                bookmarks: {
+                    getTree: (callback) => {
+                        const mockBookmarks = [
+                            {
+                                id: '0',
+                                title: '',
+                                children: [
+                                    {
+                                        id: '1',
+                                        title: 'Bookmarks Bar',
+                                        children: [
+                                            { id: '2', title: 'Google', url: 'https://google.com' },
+                                            { id: '3', title: 'GitHub', url: 'https://github.com' },
+                                            {
+                                                id: '4',
+                                                title: 'Dev Tools',
+                                                children: [
+                                                    { id: '5', title: 'MDN', url: 'https://developer.mozilla.org' },
+                                                    { id: '6', title: 'Stack Overflow', url: 'https://stackoverflow.com' }
+                                                ]
+                                            }
+                                        ]
+                                    }
+                                ]
+                            }
+                        ];
+                        if (callback) callback(mockBookmarks);
+                    },
 
-    page.on('pageerror', (error) => {
-        errors.push({
-            type: 'pageerror',
-            message: error.message,
-            stack: error.stack
-        });
-    });
+                    search: (query, callback) => {
+                        const results = [
+                            { id: '2', title: 'Google', url: 'https://google.com' }
+                        ];
+                        if (callback) callback(results);
+                    }
+                },
 
-    page.on('console', (msg) => {
-        if (msg.type() === 'error') {
-            errors.push({
-                type: 'console.error',
-                message: msg.text()
-            });
-        }
-    });
+                storage: {
+                    local: {
+                        get: (keys, callback) => {
+                            const mockData = {
+                                'max-entries': 20,
+                                'show-urls': true,
+                                'theme': 'light'
+                            };
+                            if (callback) callback(mockData);
+                        },
 
-    return {
-        getErrors: () => errors,
-        hasErrors: () => errors.length > 0,
-        clearErrors: () => errors.length = 0
-    };
-}
+                        set: (items, callback) => {
+                            if (callback) callback();
+                        }
+                    }
+                },
 
-/**
- * 获取页面诊断信息
- */
-async function getPageDiagnostics(page) {
-    return await page.evaluate(() => {
-        const diagnostics = {
-            url: window.location.href,
-            title: document.title,
-            readyState: document.readyState,
-            visibilityState: document.visibilityState,
-            hasChromeGlobal: typeof chrome !== 'undefined',
-            hasBookmarksAPI: typeof chrome !== 'undefined' && chrome.bookmarks !== undefined,
-            hasStorageAPI: typeof chrome !== 'undefined' && chrome.storage !== undefined,
-            scriptElements: Array.from(document.querySelectorAll('script')).map(script => ({
-                src: script.src,
-                type: script.type,
-                loaded: script.readyState || 'unknown'
-            })),
-            moduleScripts: Array.from(document.querySelectorAll('script[type="module"]')).length,
-            errors: []
-        };
-
-        // 检查关键DOM元素
-        const keyElements = [
-            'searchBox',
-            'settings-toggle',
-            'settings-panel',
-            'bookmarks-container'
-        ];
-
-        diagnostics.elements = {};
-        keyElements.forEach(id => {
-            const element = document.getElementById(id);
-            diagnostics.elements[id] = {
-                exists: !!element,
-                visible: element ? !element.hidden && window.getComputedStyle(element).display !== 'none' : false,
-                className: element ? element.className : null
+                runtime: {
+                    getURL: (path) => `chrome-extension://mock-extension-id/${path}`
+                }
             };
         });
+    }
 
-        // 检查关键函数是否存在
-        diagnostics.functions = {
-            hasToggleFunction: typeof toggleSettings !== 'undefined',
-            hasRenderFunction: typeof renderBookmarks !== 'undefined',
-            hasFilterFunction: typeof filterBookmarks !== 'undefined'
-        };
+    /**
+     * 截取页面截图
+     */
+    async takeScreenshot(page, name) {
+        const timestamp = new Date().toISOString().replace(/[:.]/g, '-');
+        const filename = `${name}-${timestamp}.png`;
+        const screenshotPath = path.join(__dirname, 'screenshots', filename);
 
-        return diagnostics;
-    });
+        await page.screenshot({
+            path: screenshotPath,
+            fullPage: true
+        });
+
+        return screenshotPath;
+    }
+
+    /**
+     * 获取页面诊断信息
+     */
+    async getPageDiagnostics(page) {
+        return await page.evaluate(() => {
+            return {
+                url: window.location.href,
+                title: document.title,
+                readyState: document.readyState,
+                hasChrome: typeof chrome !== 'undefined',
+                hasBookmarksAPI: typeof chrome !== 'undefined' && chrome.bookmarks !== undefined,
+                hasStorageAPI: typeof chrome !== 'undefined' && chrome.storage !== undefined,
+                elements: {
+                    searchBox: !!document.getElementById('searchBox'),
+                    settingsToggle: !!document.getElementById('settings-toggle'),
+                    settingsPanel: !!document.getElementById('settings-panel'),
+                    bookmarksContainer: !!document.getElementById('bookmarks-container')
+                },
+                scripts: Array.from(document.querySelectorAll('script')).map(s => ({
+                    src: s.src,
+                    type: s.type
+                }))
+            };
+        });
+    }
+
+    /**
+     * 清理资源
+     */
+    async cleanup() {
+        if (this.browser) {
+            await this.browser.close();
+            this.browser = null;
+        }
+    }
 }
 
 /**
- * 模拟书签数据注入（用于测试环境）
+ * 创建模拟书签数据
  */
 function createMockBookmarks() {
     return [
         {
-            id: '1',
-            title: 'Google',
-            url: 'https://www.google.com',
-            parentId: '0'
-        },
-        {
-            id: '2',
-            title: 'GitHub',
-            url: 'https://github.com',
-            parentId: '0'
-        },
-        {
-            id: '3',
-            title: 'Folder Example',
-            parentId: '0',
+            id: '0',
+            title: '',
             children: [
                 {
-                    id: '4',
-                    title: 'Sub Item 1',
-                    url: 'https://example1.com',
-                    parentId: '3'
-                },
-                {
-                    id: '5',
-                    title: 'Sub Item 2',
-                    url: 'https://example2.com',
-                    parentId: '3'
+                    id: '1',
+                    title: 'Bookmarks Bar',
+                    children: [
+                        { id: '2', title: 'Google', url: 'https://google.com' },
+                        { id: '3', title: 'GitHub', url: 'https://github.com' },
+                        { id: '4', title: 'Stack Overflow', url: 'https://stackoverflow.com' },
+                        {
+                            id: '5',
+                            title: 'Development',
+                            children: [
+                                { id: '6', title: 'MDN Web Docs', url: 'https://developer.mozilla.org' },
+                                { id: '7', title: 'Can I Use', url: 'https://caniuse.com' }
+                            ]
+                        }
+                    ]
                 }
             ]
         }
@@ -175,10 +246,6 @@ function createMockBookmarks() {
 }
 
 module.exports = {
-    createExtensionContext,
-    waitForElement,
-    waitForPageLoad,
-    checkForJSErrors,
-    getPageDiagnostics,
+    ExtensionTester,
     createMockBookmarks
 }; 
