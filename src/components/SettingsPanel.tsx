@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, X, Save, Brain, TestTube } from 'lucide-react';
 import { Config } from '@/types/bookmark';
 import { useAI } from '@/hooks/useAI';
@@ -27,24 +27,49 @@ export function SettingsPanel({
     const [aiModel, setAiModel] = useState(config.aiModel || '');
     const [isTestingConnection, setIsTestingConnection] = useState(false);
     const [testResult, setTestResult] = useState<string | null>(null);
+    const [isSaving, setIsSaving] = useState(false);
 
     const { saveConfig, testConnection, isConfigValid, error, clearError } = useAI();
 
+    // 当配置变化时更新状态
+    useEffect(() => {
+        setMaxEntries(config.maxEntriesPerColumn);
+        setShowDebugInfo(config.showDebugInfo);
+        setAiApiUrl(config.aiApiUrl || '');
+        setAiApiKey(config.aiApiKey || '');
+        setAiModel(config.aiModel || '');
+    }, [config]);
+
     const handleSave = async () => {
-        // 保存基本设置
-        onUpdateMaxEntries(maxEntries);
-        onUpdateShowDebugInfo(showDebugInfo);
+        setIsSaving(true);
+        setTestResult(null);
+        clearError();
 
-        // 保存AI配置
-        if (aiApiUrl || aiApiKey || aiModel) {
-            await saveConfig({
-                apiUrl: aiApiUrl,
-                apiKey: aiApiKey,
-                model: aiModel
-            });
+        try {
+            // 保存基本设置
+            onUpdateMaxEntries(maxEntries);
+            onUpdateShowDebugInfo(showDebugInfo);
+
+            // 保存AI配置
+            if (aiApiUrl || aiApiKey || aiModel) {
+                await saveConfig({
+                    apiUrl: aiApiUrl,
+                    apiKey: aiApiKey,
+                    model: aiModel
+                });
+            }
+
+            setTestResult('✅ 设置保存成功！');
+
+            // 延迟关闭面板，让用户看到成功提示
+            setTimeout(() => {
+                onClose();
+            }, 1000);
+        } catch (error) {
+            setTestResult(`❌ 保存失败: ${error instanceof Error ? error.message : '未知错误'}`);
+        } finally {
+            setIsSaving(false);
         }
-
-        onClose();
     };
 
     const handleReset = () => {
@@ -96,7 +121,7 @@ export function SettingsPanel({
             />
 
             {/* Panel */}
-            <div id="settings-panel" className="fixed top-20 right-6 w-80 max-h-[80vh] overflow-y-auto bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-xl shadow-2xl z-50 animate-slide-down">
+            <div id="settings-panel" className="fixed top-20 right-6 w-[440px] max-h-[80vh] overflow-y-auto bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-xl shadow-2xl z-50 animate-slide-down">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-white/10">
                     <div className="flex items-center space-x-3">
@@ -266,10 +291,11 @@ export function SettingsPanel({
                         </button>
                         <button
                             onClick={handleSave}
-                            className="flex-1 px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2"
+                            disabled={isSaving}
+                            className="flex-1 px-4 py-2 text-sm text-white bg-blue-600 hover:bg-blue-700 rounded-lg transition-colors duration-200 flex items-center justify-center space-x-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
                             <Save className="w-4 h-4" />
-                            <span>Save</span>
+                            <span>{isSaving ? 'Saving...' : 'Save'}</span>
                         </button>
                     </div>
                 </div>

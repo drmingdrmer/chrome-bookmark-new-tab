@@ -19,10 +19,31 @@ export function useSettings() {
             setIsLoading(true);
             setError(null);
 
+            // 加载基本配置
             const savedConfig = await getStorageData<Config>('config');
-            if (savedConfig) {
-                setConfig({ ...DEFAULT_CONFIG, ...savedConfig });
+
+            // 加载AI配置
+            let aiConfig = {};
+            if (typeof chrome !== 'undefined' && chrome.storage) {
+                try {
+                    const aiResult = await chrome.storage.sync.get(['apiUrl', 'apiKey', 'model']);
+                    aiConfig = {
+                        aiApiUrl: aiResult.apiUrl || '',
+                        aiApiKey: aiResult.apiKey || '',
+                        aiModel: aiResult.model || ''
+                    };
+                } catch (aiError) {
+                    console.warn('Failed to load AI config:', aiError);
+                }
             }
+
+            const finalConfig = {
+                ...DEFAULT_CONFIG,
+                ...savedConfig,
+                ...aiConfig
+            };
+
+            setConfig(finalConfig);
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load settings');
         } finally {
