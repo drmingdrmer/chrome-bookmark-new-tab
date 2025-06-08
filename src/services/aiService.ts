@@ -339,16 +339,84 @@ ${bookmarkList}
     }
 
     // 测试API连接
-    async testConnection(): Promise<{ success: boolean; response: string }> {
+    async testConnection(): Promise<{ success: boolean; response: string; requestInfo?: any; responseInfo?: any }> {
         if (!this.isConfigValid()) {
             throw new Error('AI配置无效，请先配置API设置');
         }
 
         try {
             const testPrompt = "请回复'连接测试成功'";
-            const response = await this.callAPI(testPrompt);
-            console.log('✅ API测试成功', response.substring(0, 50));
-            return { success: true, response: response };
+
+            const requestBody = {
+                model: this.config.model,
+                messages: [{
+                    role: "user" as const,
+                    content: testPrompt
+                }],
+                temperature: 0.7,
+                max_tokens: 100
+            };
+
+            console.log('🚀 发送请求:', {
+                url: this.config.apiUrl,
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.config.apiKey?.substring(0, 10)}...`
+                },
+                body: requestBody
+            });
+
+            const startTime = Date.now();
+            const response = await fetch(this.config.apiUrl!, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${this.config.apiKey}`
+                },
+                body: JSON.stringify(requestBody)
+            });
+
+            const endTime = Date.now();
+            const responseTime = endTime - startTime;
+
+            if (!response.ok) {
+                const errorText = await response.text();
+                console.error('❌ API响应错误:', {
+                    status: response.status,
+                    statusText: response.statusText,
+                    error: errorText
+                });
+                throw new Error(`API请求失败 (${response.status}): ${errorText}`);
+            }
+
+            const data = await response.json();
+            const content = data.choices?.[0]?.message?.content;
+
+            if (!content) {
+                throw new Error('API返回数据格式错误，未找到内容');
+            }
+
+            console.log('✅ API测试成功', {
+                responseTime: `${responseTime}ms`,
+                response: content.substring(0, 100)
+            });
+
+            return {
+                success: true,
+                response: content.trim(),
+                requestInfo: {
+                    url: this.config.apiUrl,
+                    model: this.config.model,
+                    prompt: testPrompt,
+                    timestamp: new Date().toISOString()
+                },
+                responseInfo: {
+                    status: response.status,
+                    responseTime: `${responseTime}ms`,
+                    contentLength: content.length,
+                    usage: data.usage
+                }
+            };
         } catch (error) {
             console.error('❌ API连接测试失败:', error);
             throw error;

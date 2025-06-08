@@ -27,6 +27,7 @@ export function SettingsPanel({
     const [aiModel, setAiModel] = useState(config.aiModel || '');
     const [isTestingConnection, setIsTestingConnection] = useState(false);
     const [testResult, setTestResult] = useState<string | null>(null);
+    const [testDetails, setTestDetails] = useState<any>(null);
     const [isSaving, setIsSaving] = useState(false);
 
     const { saveConfig, testConnection, isConfigValid, error, clearError } = useAI();
@@ -79,17 +80,20 @@ export function SettingsPanel({
         setAiApiKey('');
         setAiModel('');
         setTestResult(null);
+        setTestDetails(null);
         clearError();
     };
 
     const handleTestConnection = async () => {
         if (!aiApiUrl || !aiApiKey || !aiModel) {
             setTestResult('请先填写完整的AI配置');
+            setTestDetails(null);
             return;
         }
 
         setIsTestingConnection(true);
         setTestResult(null);
+        setTestDetails(null);
         clearError();
 
         try {
@@ -103,8 +107,14 @@ export function SettingsPanel({
             // 然后测试连接
             const result = await testConnection();
             setTestResult('✅ 连接成功！');
+            setTestDetails({
+                request: result.requestInfo,
+                response: result.responseInfo,
+                content: result.response
+            });
         } catch (error) {
             setTestResult(`❌ 连接失败: ${error instanceof Error ? error.message : '未知错误'}`);
+            setTestDetails(null);
         } finally {
             setIsTestingConnection(false);
         }
@@ -121,7 +131,7 @@ export function SettingsPanel({
             />
 
             {/* Panel */}
-            <div id="settings-panel" className="fixed top-20 right-6 w-[440px] max-h-[80vh] overflow-y-auto bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-xl shadow-2xl z-50 animate-slide-down">
+            <div id="settings-panel" className="fixed top-20 right-6 w-[880px] max-h-[80vh] overflow-y-auto bg-gray-900/95 backdrop-blur-sm border border-white/20 rounded-xl shadow-2xl z-50 animate-slide-down">
                 {/* Header */}
                 <div className="flex items-center justify-between p-6 border-b border-white/10">
                     <div className="flex items-center space-x-3">
@@ -139,40 +149,22 @@ export function SettingsPanel({
                 {/* Content */}
                 <div className="p-6 space-y-6">
                     {/* Max Entries Setting */}
-                    <div>
+                    <div className="flex items-center space-x-3">
                         <label
                             htmlFor="max-entries"
-                            className="block text-sm font-medium text-white mb-3"
+                            className="text-sm font-medium text-white whitespace-nowrap"
                         >
-                            Maximum entries per column
+                            Maximum entries per column:
                         </label>
-                        <div className="space-y-3">
-                            <input
-                                id="max-entries"
-                                type="number"
-                                min="5"
-                                max="100"
-                                value={maxEntries}
-                                onChange={(e) => setMaxEntries(Number(e.target.value))}
-                                className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
-                            />
-                            <div className="flex items-center space-x-2">
-                                <input
-                                    type="range"
-                                    min="5"
-                                    max="100"
-                                    value={maxEntries}
-                                    onChange={(e) => setMaxEntries(Number(e.target.value))}
-                                    className="flex-1 h-2 bg-white/20 rounded-lg appearance-none cursor-pointer"
-                                />
-                                <span className="text-sm text-gray-400 w-8 text-right">
-                                    {maxEntries}
-                                </span>
-                            </div>
-                            <p className="text-xs text-gray-400">
-                                Controls how many bookmarks appear in each column before splitting into multiple columns.
-                            </p>
-                        </div>
+                        <input
+                            id="max-entries"
+                            type="number"
+                            min="5"
+                            max="100"
+                            value={maxEntries}
+                            onChange={(e) => setMaxEntries(Number(e.target.value))}
+                            className="w-20 px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
+                        />
                     </div>
 
                     {/* Show Debug Info Setting */}
@@ -207,11 +199,11 @@ export function SettingsPanel({
                             <h4 className="text-sm font-medium text-white">AI Configuration</h4>
                         </div>
 
-                        <div className="space-y-4">
+                        <div className="space-y-3">
                             {/* API URL */}
-                            <div>
-                                <label htmlFor="ai-api-url" className="block text-sm text-gray-300 mb-2">
-                                    API URL
+                            <div className="flex items-center space-x-3">
+                                <label htmlFor="ai-api-url" className="text-sm text-gray-300 whitespace-nowrap w-20">
+                                    API URL:
                                 </label>
                                 <input
                                     id="ai-api-url"
@@ -219,14 +211,14 @@ export function SettingsPanel({
                                     value={aiApiUrl}
                                     onChange={(e) => setAiApiUrl(e.target.value)}
                                     placeholder="https://api.openai.com/v1/chat/completions"
-                                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-sm"
+                                    className="flex-1 px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-sm"
                                 />
                             </div>
 
                             {/* API Key */}
-                            <div>
-                                <label htmlFor="ai-api-key" className="block text-sm text-gray-300 mb-2">
-                                    API Key
+                            <div className="flex items-center space-x-3">
+                                <label htmlFor="ai-api-key" className="text-sm text-gray-300 whitespace-nowrap w-20">
+                                    API Key:
                                 </label>
                                 <input
                                     id="ai-api-key"
@@ -234,14 +226,14 @@ export function SettingsPanel({
                                     value={aiApiKey}
                                     onChange={(e) => setAiApiKey(e.target.value)}
                                     placeholder="sk-..."
-                                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-sm"
+                                    className="flex-1 px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-sm"
                                 />
                             </div>
 
                             {/* Model */}
-                            <div>
-                                <label htmlFor="ai-model" className="block text-sm text-gray-300 mb-2">
-                                    Model
+                            <div className="flex items-center space-x-3">
+                                <label htmlFor="ai-model" className="text-sm text-gray-300 whitespace-nowrap w-20">
+                                    Model:
                                 </label>
                                 <input
                                     id="ai-model"
@@ -249,7 +241,7 @@ export function SettingsPanel({
                                     value={aiModel}
                                     onChange={(e) => setAiModel(e.target.value)}
                                     placeholder="gpt-3.5-turbo"
-                                    className="w-full px-3 py-2 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-sm"
+                                    className="flex-1 px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-purple-400 focus:border-transparent text-sm"
                                 />
                             </div>
 
@@ -266,9 +258,46 @@ export function SettingsPanel({
 
                                 {/* Test Result */}
                                 {testResult && (
-                                    <p className={`text-sm mt-2 ${testResult.includes('✅') ? 'text-green-400' : 'text-red-400'}`}>
-                                        {testResult}
-                                    </p>
+                                    <div className="mt-3">
+                                        <p className={`text-sm ${testResult.includes('✅') ? 'text-green-400' : 'text-red-400'}`}>
+                                            {testResult}
+                                        </p>
+
+                                        {/* Test Details */}
+                                        {testDetails && (
+                                            <div className="mt-3 p-3 bg-black/30 rounded-lg text-xs space-y-2">
+                                                {/* Request Info */}
+                                                <div>
+                                                    <p className="text-blue-300 font-medium mb-1">📤 请求信息:</p>
+                                                    <div className="text-gray-300 space-y-1">
+                                                        <p>• URL: {testDetails.request?.url}</p>
+                                                        <p>• 模型: {testDetails.request?.model}</p>
+                                                        <p>• 提示词: "{testDetails.request?.prompt}"</p>
+                                                        <p>• 时间: {testDetails.request?.timestamp}</p>
+                                                    </div>
+                                                </div>
+
+                                                {/* Response Info */}
+                                                <div>
+                                                    <p className="text-green-300 font-medium mb-1">📥 响应信息:</p>
+                                                    <div className="text-gray-300 space-y-1">
+                                                        <p>• 状态: {testDetails.response?.status}</p>
+                                                        <p>• 响应时间: {testDetails.response?.responseTime}</p>
+                                                        <p>• 内容长度: {testDetails.response?.contentLength} 字符</p>
+                                                        {testDetails.response?.usage && (
+                                                            <p>• Token使用: {JSON.stringify(testDetails.response.usage)}</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {/* Response Content */}
+                                                <div>
+                                                    <p className="text-purple-300 font-medium mb-1">💬 回复内容:</p>
+                                                    <p className="text-gray-300 italic">"{testDetails.content}"</p>
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
                                 )}
 
                                 {/* Error Display */}
