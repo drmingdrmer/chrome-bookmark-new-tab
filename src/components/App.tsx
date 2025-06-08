@@ -341,7 +341,13 @@ export function App() {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <div className="min-h-screen bg-gray-900">
+            <div className="min-h-screen bg-gray-900" style={{
+                backgroundImage: 'url(../girl-grey.jpg)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                backgroundAttachment: 'fixed'
+            }}>
                 {/* Header */}
                 <header className="relative p-4">
                     {/* Settings Button */}

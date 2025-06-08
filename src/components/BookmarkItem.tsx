@@ -97,7 +97,7 @@ export function BookmarkItem({
                 >
                     <div className="mb-0.5">
                         <h3
-                            className="text-sm font-medium text-white truncate leading-tight"
+                            className="text-sm font-medium text-gray-200 truncate leading-tight"
                             dangerouslySetInnerHTML={{ __html: getHighlightedTitle() }}
                         />
                         {/* Debug Info */}

@@ -59,7 +59,7 @@ export function FolderColumn({
     return (
         <div
             ref={setNodeRef}
-            className={`w-full rounded-xl border border-white/10 overflow-hidden transition-all duration-200 bg-gray-800 ${isOver ? 'ring-2 ring-blue-400/50 border-blue-400/50' : ''
+            className={`w-full rounded-xl border border-white/10 overflow-hidden transition-all duration-200 ${isOver ? 'ring-2 ring-blue-400/50 border-blue-400/50' : ''
                 }`}
         >
             {/* Header */}
@@ -82,7 +82,7 @@ export function FolderColumn({
             ></div>
 
             {/* Content */}
-            <div className="p-1.5">
+            <div className="p-1.5 bg-black/60 backdrop-blur-sm">
                 {bookmarks.length === 0 ? (
                     <div className="text-center py-4 text-gray-400">
                         <Folder className="w-5 h-5 mx-auto mb-1.5 opacity-50" />
