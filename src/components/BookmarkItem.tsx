@@ -234,8 +234,8 @@ export function BookmarkItem({
 
                                 {/* 评分原因 */}
                                 {rating.reason && (
-                                    <span className="text-gray-400 flex-1 truncate" title={rating.reason}>
-                                        {rating.reason.length > 30 ? rating.reason.substring(0, 30) + '...' : rating.reason}
+                                    <span className="text-gray-400 flex-1" title={rating.reason}>
+                                        {rating.reason}
                                     </span>
                                 )}
                             </div>

@@ -218,15 +218,16 @@ export function App() {
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                     {searchResults.map(({ bookmark, folderPath }) => (
-                        <BookmarkItem
-                            key={bookmark.id}
-                            bookmark={bookmark}
-                            searchTerm={searchTerm}
-                            folderPath={folderPath}
-                            onDelete={deleteBookmark}
-                            showUrl={true}
-                            showDebugInfo={config.showDebugInfo}
-                        />
+                        <div key={bookmark.id} className="bg-black/60 rounded-xl border border-white/10 p-1.5">
+                            <BookmarkItem
+                                bookmark={bookmark}
+                                searchTerm={searchTerm}
+                                folderPath={folderPath}
+                                onDelete={deleteBookmark}
+                                showUrl={true}
+                                showDebugInfo={config.showDebugInfo}
+                            />
+                        </div>
                     ))}
                 </div>
             </div>
