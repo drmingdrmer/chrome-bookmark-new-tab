@@ -341,7 +341,7 @@ export function App() {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <div className="min-h-screen bg-gray-900" style={{
+            <div className="min-h-screen w-full bg-black" style={{
                 backgroundImage: 'url(../girl-grey.jpg)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
