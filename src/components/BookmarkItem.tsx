@@ -223,17 +223,12 @@ export function BookmarkItem({
 
                         {/* AI评分详情 */}
                         {rating && (
-                            <div className="text-xs mt-0.5 flex items-center space-x-2">
-                                {/* 维度标签 */}
-                                <span className={`text-xs font-medium ${getDimensionStyle(rating.dimension).textColor}`}>
+                            <div className="text-xs mt-0.5 text-gray-400" title={rating.reason || ''}>
+                                <span className={`font-medium ${getDimensionStyle(rating.dimension).textColor}`}>
                                     ● {getDimensionStyle(rating.dimension).label}
                                 </span>
-
-                                {/* 评分原因 */}
                                 {rating.reason && (
-                                    <span className="text-gray-400 flex-1" title={rating.reason}>
-                                        {rating.reason}
-                                    </span>
+                                    <span> {rating.reason}</span>
                                 )}
                             </div>
                         )}
