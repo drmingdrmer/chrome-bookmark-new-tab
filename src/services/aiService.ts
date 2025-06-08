@@ -35,21 +35,7 @@ export class AIService {
         return !!(this.config.apiKey && this.config.apiUrl && this.config.model);
     }
 
-    // 分析单个书签
-    async analyzeBookmark(bookmark: Bookmark): Promise<BookmarkAnalysis> {
-        if (!this.isConfigValid()) {
-            throw new Error('AI配置无效，请先配置API设置');
-        }
 
-        const prompt = this.buildAnalysisPrompt(bookmark);
-
-        try {
-            const response = await this.callAPI(prompt);
-            return this.parseAnalysisResponse(response, bookmark);
-        } catch (error) {
-            throw new Error(`分析书签失败: ${error instanceof Error ? error.message : String(error)}`);
-        }
-    }
 
     // 批量分析书签
     async analyzeBatch(bookmarks: Bookmark[], batchIndex = 1): Promise<BookmarkAnalysis[]> {
@@ -93,33 +79,7 @@ export class AIService {
         }
     }
 
-    // 构建分析提示词
-    private buildAnalysisPrompt(bookmark: Bookmark): string {
-        return `请分析这个书签的重要性：
 
-标题：${bookmark.title}
-URL：${bookmark.url}
-
-请按照以下JSON格式返回分析结果：
-{
-  "score": <1-10的重要性评分>,
-  "dimension": "<${VALID_DIMENSIONS.join('|')}>",
-  "reason": "<50字以内的分析理由>"
-}
-
-评分标准：
-- 技术文档、学习资源：7-10分
-- 实用工具、参考资料：5-8分
-- 娱乐内容：2-5分
-- 过时或低价值内容：1-3分
-
-维度说明：
-- work: 工作相关（技术文档、工具、项目）
-- learn: 学习相关（教程、课程、知识）
-- fun: 娱乐相关（游戏、视频、社交）
-- tool: 工具相关（在线工具、服务）
-- other: 其他未分类内容`;
-    }
 
     // 构建批量分析提示词
     private buildBatchAnalysisPrompt(bookmarks: Bookmark[]): string {
@@ -231,32 +191,7 @@ ${bookmarkList}
         return content.trim();
     }
 
-    // 解析分析响应
-    private parseAnalysisResponse(response: string, bookmark: Bookmark): BookmarkAnalysis {
-        try {
-            // 提取JSON部分
-            const jsonMatch = response.match(/\{[\s\S]*\}/);
-            if (!jsonMatch) {
-                throw new Error('未找到有效的JSON响应');
-            }
 
-            const result = JSON.parse(jsonMatch[0]);
-
-            return {
-                bookmark: bookmark,
-                score: Number(result.score) || 1,
-                dimension: result.dimension || 'other',
-                reason: result.reason || '无分析理由'
-            };
-        } catch (error) {
-            return {
-                bookmark: bookmark,
-                score: 1,
-                dimension: 'other',
-                reason: '解析失败，使用默认值'
-            };
-        }
-    }
 
     // 解析批量分析响应
     private parseBatchAnalysisResponse(response: string, bookmarks: Bookmark[]): BookmarkAnalysis[] {

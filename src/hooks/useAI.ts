@@ -81,27 +81,7 @@ export function useAI() {
         }
     }, []);
 
-    // 分析单个书签
-    const analyzeBookmark = useCallback(async (bookmark: Bookmark) => {
-        setState(prev => ({ ...prev, isLoading: true, error: null }));
 
-        try {
-            const analysis = await aiService.analyzeBookmark(bookmark);
-            setState(prev => ({
-                ...prev,
-                isLoading: false,
-                analyses: [...prev.analyses.filter(a => a.bookmark.id !== bookmark.id), analysis]
-            }));
-            return analysis;
-        } catch (error) {
-            setState(prev => ({
-                ...prev,
-                isLoading: false,
-                error: error instanceof Error ? error.message : '书签分析失败'
-            }));
-            throw error;
-        }
-    }, []);
 
     // 批量分析书签
     const analyzeBatch = useCallback(async (bookmarks: Bookmark[]) => {
@@ -186,7 +166,6 @@ export function useAI() {
         loadConfig,
         saveConfig,
         testConnection,
-        analyzeBookmark,
         analyzeBatch,
         getRecommendations,
         clearError,
