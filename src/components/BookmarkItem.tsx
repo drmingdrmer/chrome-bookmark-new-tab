@@ -121,52 +121,7 @@ export function BookmarkItem({
         return 'text-gray-700';                       // 1-2分：最深灰色
     };
 
-    // 获取基于分值的完整视觉样式 (适配1-10分制)
-    const getScoreVisualStyle = (score: number) => {
-        if (score >= 9) {
-            return {
-                bgColor: '',
-                glowEffect: '',
-                badge: '⭐',
-                level: '优秀'
-            };
-        } else if (score >= 8) {
-            return {
-                bgColor: '',
-                glowEffect: '',
-                badge: '✨',
-                level: '良好'
-            };
-        } else if (score >= 7) {
-            return {
-                bgColor: '',
-                glowEffect: '',
-                badge: '💫',
-                level: '中等'
-            };
-        } else if (score >= 6) {
-            return {
-                bgColor: '',
-                glowEffect: '',
-                badge: '⚡',
-                level: '一般'
-            };
-        } else if (score >= 4) {
-            return {
-                bgColor: '',
-                glowEffect: '',
-                badge: '⚠️',
-                level: '偏低'
-            };
-        } else {
-            return {
-                bgColor: '',
-                glowEffect: '',
-                badge: '📉',
-                level: '较低'
-            };
-        }
-    };
+
 
     // 获取维度的视觉样式
     const getDimensionStyle = (dimension: string) => {
@@ -210,8 +165,7 @@ export function BookmarkItem({
         return styles[dimension as keyof typeof styles] || styles.other;
     };
 
-    // 获取基于评分的视觉样式
-    const scoreVisualStyle = rating ? getScoreVisualStyle(rating.score) : null;
+
 
     return (
         <div
@@ -247,7 +201,7 @@ export function BookmarkItem({
                             />
 
                             {/* AI评分显示 */}
-                            {rating && scoreVisualStyle && (
+                            {rating && (
                                 <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
                                     {/* 星级显示 */}
                                     <div className="flex items-center">
