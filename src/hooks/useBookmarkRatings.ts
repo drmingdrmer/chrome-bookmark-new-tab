@@ -39,13 +39,11 @@ export function useBookmarkRatings() {
         setProgressStep('🔍 正在检查书签...');
 
         try {
-            // 过滤掉已有评分的书签（可选：如果想要重新评分，移除这个过滤）
-            const bookmarksToRate = bookmarks.filter(bookmark =>
-                bookmark.url && !ratings[bookmark.url]
-            );
+            // 包含所有有URL的书签，允许重新评分
+            const bookmarksToRate = bookmarks.filter(bookmark => bookmark.url);
 
             if (bookmarksToRate.length === 0) {
-                setError('所有书签都已有评分');
+                setError('没有可评分的书签（需要有URL）');
                 return;
             }
 

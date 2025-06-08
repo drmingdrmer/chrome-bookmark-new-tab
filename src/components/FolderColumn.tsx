@@ -216,7 +216,7 @@ export function FolderColumn({
 
             {/* AI评分状态显示区域 */}
             {showRatingStatus && (
-                <div className="px-3 py-2 bg-black/30 border-b border-white/10">
+                <div className="px-3 py-2 bg-blue-500 border-b border-blue-400">
                     {ratingsLoading && progressStep && (
                         <div className="flex items-center space-x-3">
                             <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse flex-shrink-0"></div>
