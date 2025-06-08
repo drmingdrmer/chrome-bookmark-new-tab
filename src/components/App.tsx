@@ -369,7 +369,7 @@ export function App() {
                     {/* AI Analysis Button */}
                     <button
                         onClick={() => setIsAIAnalysisOpen(true)}
-                        className="absolute top-4 left-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                        className="absolute top-4 left-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
                         aria-label="AI Analysis"
                         tabIndex={-1}
                     >
@@ -380,7 +380,7 @@ export function App() {
                     <button
                         id="settings-toggle"
                         onClick={toggleSettings}
-                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
                         aria-label="Settings"
                         tabIndex={-1}
                     >

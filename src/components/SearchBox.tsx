@@ -40,7 +40,7 @@ export function SearchBox({ value, onSearch, onClear, placeholder = "Search book
                     onKeyDown={handleKeyDown}
                     placeholder={placeholder}
                     autoFocus
-                    className="w-full pl-9 pr-3 py-2.5 text-base bg-white/10 backdrop-blur-sm border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent transition-all duration-200"
+                    className="w-full pl-9 pr-3 py-2.5 text-base bg-white/20 border border-white/20 rounded-xl text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
                 />
             </div>
         </div>
