@@ -82,6 +82,11 @@ export function useBookmarkRatings() {
             setProgressStep('✅ 评分完成');
             setShowSuccess(true);
 
+            // 通知需要刷新显示
+            window.dispatchEvent(new CustomEvent('bookmark-ratings-updated', {
+                detail: { updatedUrls: newRatings.map(r => r.url) }
+            }));
+
             return newRatings;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : '评分失败';
@@ -89,11 +94,8 @@ export function useBookmarkRatings() {
             setProgressStep('❌ 评分失败');
             throw error;
         } finally {
-            setTimeout(() => {
-                setIsLoading(false);
-                setProgressStep('');
-                setShowSuccess(false);
-            }, 2000); // 显示完成状态2秒后清除
+            setIsLoading(false);
+            // 不在这里清除状态，让组件自己管理状态清除
         }
     }, [analyzeBatch, isConfigValid, ratings]);
 
@@ -132,6 +134,13 @@ export function useBookmarkRatings() {
         loadRatings();
     }, [loadRatings]);
 
+    // 清除所有状态
+    const clearStatus = useCallback(() => {
+        setProgressStep('');
+        setShowSuccess(false);
+        setError(null);
+    }, []);
+
     return {
         ratings,
         isLoading,
@@ -143,6 +152,7 @@ export function useBookmarkRatings() {
         hasRating,
         getRatingStats,
         loadRatings,
-        clearError: () => setError(null)
+        clearError: () => setError(null),
+        clearStatus
     };
 } 

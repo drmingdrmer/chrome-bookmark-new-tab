@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Folder, Eraser, Brain } from 'lucide-react';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
@@ -56,6 +56,7 @@ export function FolderColumn({
     showDebugInfo = false
 }: FolderColumnProps) {
     const [isRating, setIsRating] = useState(false);
+    const [showRatingStatus, setShowRatingStatus] = useState(false);
     const accentColor = folderId ? getAccentColor(folderId) : '#3b82f6';
 
     const {
@@ -64,8 +65,29 @@ export function FolderColumn({
         error: ratingsError,
         progressStep,
         showSuccess,
-        clearError
+        clearError,
+        clearStatus
     } = useBookmarkRatings();
+
+    // 监听评分完成，自动隐藏状态区域
+    useEffect(() => {
+        if (showSuccess && !ratingsLoading) {
+            // 评分成功后2秒自动隐藏状态区域
+            const timer = setTimeout(() => {
+                setShowRatingStatus(false);
+                clearStatus(); // 清除所有状态
+            }, 2000);
+
+            return () => clearTimeout(timer);
+        }
+    }, [showSuccess, ratingsLoading, clearStatus]);
+
+    // 当评分状态重置时，也隐藏状态区域
+    useEffect(() => {
+        if (!isRating && !ratingsLoading && !showSuccess && !ratingsError) {
+            setShowRatingStatus(false);
+        }
+    }, [isRating, ratingsLoading, showSuccess, ratingsError]);
 
     const { setNodeRef, isOver } = useDroppable({
         id: folderId || 'root',
@@ -117,33 +139,26 @@ export function FolderColumn({
         const bookmarksWithUrls = bookmarks.filter(bookmark => bookmark.url);
 
         if (bookmarksWithUrls.length === 0) {
-            alert('此文件夹中没有可评分的书签');
-            return;
-        }
-
-        const confirmed = window.confirm(
-            `将对 ${bookmarksWithUrls.length} 个书签进行AI评分，这可能需要几秒钟时间。继续吗？`
-        );
-
-        if (!confirmed) {
             return;
         }
 
         setIsRating(true);
+        setShowRatingStatus(true);
         clearError();
 
         try {
-            const ratings = await rateBookmarks(bookmarksWithUrls);
-            if (ratings && ratings.length > 0) {
-                // 不显示alert，用户已经能看到进度完成状态
-                console.log(`✅ 成功评分 ${ratings.length} 个书签！`);
-            }
+            await rateBookmarks(bookmarksWithUrls);
         } catch (error) {
             console.error('AI评分失败:', error);
-            alert(`评分失败: ${error instanceof Error ? error.message : '未知错误'}`);
         } finally {
             setIsRating(false);
         }
+    };
+
+    // 关闭状态显示
+    const handleCloseRatingStatus = () => {
+        setShowRatingStatus(false);
+        clearStatus(); // 清除所有状态
     };
 
     return (
@@ -175,30 +190,10 @@ export function FolderColumn({
                         <button
                             onClick={handleAIRating}
                             disabled={isRating || ratingsLoading}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 text-gray-400 hover:text-purple-300 hover:bg-white/10 rounded disabled:opacity-50 disabled:cursor-not-allowed relative"
-                            title={ratingsLoading && progressStep ? progressStep : "AI评分书签"}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 text-gray-400 hover:text-purple-300 hover:bg-white/10 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="AI评分书签"
                         >
                             <Brain className={`w-3 h-3 ${isRating || ratingsLoading ? 'animate-pulse' : ''}`} />
-
-                            {/* 进度指示器 */}
-                            {(ratingsLoading && progressStep) && (
-                                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black/90 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap z-20 shadow-lg border border-white/20">
-                                    <div className="flex items-center space-x-2">
-                                        <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
-                                        <span>{progressStep}</span>
-                                    </div>
-                                </div>
-                            )}
-
-                            {/* 成功指示器 */}
-                            {showSuccess && (
-                                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-900/90 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap z-20 shadow-lg border border-green-400/30">
-                                    <div className="flex items-center space-x-2">
-                                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
-                                        <span>✅ 评分完成！</span>
-                                    </div>
-                                </div>
-                            )}
                         </button>
 
                         {/* 清理按钮 */}
@@ -218,6 +213,48 @@ export function FolderColumn({
                 className="h-0.5"
                 style={{ backgroundColor: accentColor }}
             ></div>
+
+            {/* AI评分状态显示区域 */}
+            {showRatingStatus && (
+                <div className="px-3 py-2 bg-black/30 border-b border-white/10">
+                    {ratingsLoading && progressStep && (
+                        <div className="flex items-center space-x-3">
+                            <div className="w-3 h-3 bg-purple-400 rounded-full animate-pulse flex-shrink-0"></div>
+                            <span className="text-sm text-white flex-1">{progressStep}</span>
+                        </div>
+                    )}
+
+                    {showSuccess && (
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                                <div className="w-3 h-3 bg-green-400 rounded-full flex-shrink-0"></div>
+                                <span className="text-sm text-green-300">✅ AI评分完成！所有书签已完成智能评分</span>
+                            </div>
+                            <button
+                                onClick={handleCloseRatingStatus}
+                                className="text-gray-400 hover:text-white text-sm px-2 py-1 hover:bg-white/10 rounded transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    )}
+
+                    {ratingsError && (
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-3">
+                                <div className="w-3 h-3 bg-red-400 rounded-full flex-shrink-0"></div>
+                                <span className="text-sm text-red-300">❌ 评分失败: {ratingsError}</span>
+                            </div>
+                            <button
+                                onClick={handleCloseRatingStatus}
+                                className="text-gray-400 hover:text-white text-sm px-2 py-1 hover:bg-white/10 rounded transition-colors"
+                            >
+                                ✕
+                            </button>
+                        </div>
+                    )}
+                </div>
+            )}
 
             {/* Content */}
             <div className="p-1.5 bg-black/50 backdrop-blur-sm flex-1">

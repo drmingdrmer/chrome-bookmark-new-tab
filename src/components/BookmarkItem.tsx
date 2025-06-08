@@ -37,6 +37,22 @@ export function BookmarkItem({
         }
     }, [bookmark.url]);
 
+    // 监听评分更新事件
+    useEffect(() => {
+        const handleRatingUpdate = (event: CustomEvent) => {
+            const updatedUrls = event.detail?.updatedUrls || [];
+            if (bookmark.url && updatedUrls.includes(bookmark.url)) {
+                // 重新加载这个书签的评分
+                getRating(bookmark.url).then(setRating).catch(() => setRating(null));
+            }
+        };
+
+        window.addEventListener('bookmark-ratings-updated', handleRatingUpdate as EventListener);
+        return () => {
+            window.removeEventListener('bookmark-ratings-updated', handleRatingUpdate as EventListener);
+        };
+    }, [bookmark.url]);
+
     const {
         attributes,
         listeners,
@@ -101,6 +117,48 @@ export function BookmarkItem({
         return 'text-red-400';
     };
 
+    // 获取维度的视觉样式
+    const getDimensionStyle = (dimension: string) => {
+        const styles = {
+            work: {
+                bgColor: 'bg-blue-500/20',
+                borderColor: 'border-blue-400/50',
+                textColor: 'text-blue-300',
+                icon: '💼',
+                label: '工作'
+            },
+            learn: {
+                bgColor: 'bg-green-500/20',
+                borderColor: 'border-green-400/50',
+                textColor: 'text-green-300',
+                icon: '📚',
+                label: '学习'
+            },
+            fun: {
+                bgColor: 'bg-pink-500/20',
+                borderColor: 'border-pink-400/50',
+                textColor: 'text-pink-300',
+                icon: '🎮',
+                label: '娱乐'
+            },
+            tool: {
+                bgColor: 'bg-yellow-500/20',
+                borderColor: 'border-yellow-400/50',
+                textColor: 'text-yellow-300',
+                icon: '🔧',
+                label: '工具'
+            },
+            other: {
+                bgColor: 'bg-gray-500/20',
+                borderColor: 'border-gray-400/50',
+                textColor: 'text-gray-300',
+                icon: '📄',
+                label: '其他'
+            }
+        };
+        return styles[dimension as keyof typeof styles] || styles.other;
+    };
+
     return (
         <div
             ref={setNodeRef}
@@ -158,11 +216,19 @@ export function BookmarkItem({
 
                         {/* AI评分详情 */}
                         {rating && (
-                            <div className="text-xs text-gray-400 mt-0.5">
-                                <span className="text-gray-500">{rating.dimension}</span>
+                            <div className="text-xs mt-0.5 flex items-center space-x-2">
+                                {/* 维度标签 */}
+                                <div className={`inline-flex items-center space-x-1 px-2 py-0.5 rounded-full ${getDimensionStyle(rating.dimension).bgColor} ${getDimensionStyle(rating.dimension).borderColor} border`}>
+                                    <span className="text-xs">{getDimensionStyle(rating.dimension).icon}</span>
+                                    <span className={`text-xs font-medium ${getDimensionStyle(rating.dimension).textColor}`}>
+                                        {getDimensionStyle(rating.dimension).label}
+                                    </span>
+                                </div>
+
+                                {/* 评分原因 */}
                                 {rating.reason && (
-                                    <span className="ml-2 text-gray-400" title={rating.reason}>
-                                        {rating.reason.length > 50 ? rating.reason.substring(0, 50) + '...' : rating.reason}
+                                    <span className="text-gray-400 flex-1 truncate" title={rating.reason}>
+                                        {rating.reason.length > 30 ? rating.reason.substring(0, 30) + '...' : rating.reason}
                                     </span>
                                 )}
                             </div>

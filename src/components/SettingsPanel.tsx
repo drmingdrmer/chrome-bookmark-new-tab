@@ -84,6 +84,8 @@ export function SettingsPanel({
         clearError();
     };
 
+
+
     const handleTestConnection = async () => {
         if (!aiApiUrl || !aiApiKey || !aiModel) {
             setTestResult('请先填写完整的AI配置');
