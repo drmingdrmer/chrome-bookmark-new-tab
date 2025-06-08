@@ -121,37 +121,37 @@ export function BookmarkItem({
     const getDimensionStyle = (dimension: string) => {
         const styles = {
             work: {
-                bgColor: 'bg-blue-500/20',
-                borderColor: 'border-blue-400/50',
-                textColor: 'text-blue-300',
+                bgColor: 'bg-blue-500/10',
+                borderColor: 'border-blue-400/30',
+                textColor: 'text-blue-400',
                 icon: '💼',
                 label: '工作'
             },
             learn: {
-                bgColor: 'bg-green-500/20',
-                borderColor: 'border-green-400/50',
-                textColor: 'text-green-300',
+                bgColor: 'bg-green-500/10',
+                borderColor: 'border-green-400/30',
+                textColor: 'text-green-400',
                 icon: '📚',
                 label: '学习'
             },
             fun: {
-                bgColor: 'bg-pink-500/20',
-                borderColor: 'border-pink-400/50',
-                textColor: 'text-pink-300',
+                bgColor: 'bg-pink-500/10',
+                borderColor: 'border-pink-400/30',
+                textColor: 'text-pink-400',
                 icon: '🎮',
                 label: '娱乐'
             },
             tool: {
-                bgColor: 'bg-yellow-500/20',
-                borderColor: 'border-yellow-400/50',
-                textColor: 'text-yellow-300',
+                bgColor: 'bg-yellow-500/10',
+                borderColor: 'border-yellow-400/30',
+                textColor: 'text-yellow-400',
                 icon: '🔧',
                 label: '工具'
             },
             other: {
-                bgColor: 'bg-gray-500/20',
-                borderColor: 'border-gray-400/50',
-                textColor: 'text-gray-300',
+                bgColor: 'bg-gray-500/10',
+                borderColor: 'border-gray-400/30',
+                textColor: 'text-gray-400',
                 icon: '📄',
                 label: '其他'
             }
