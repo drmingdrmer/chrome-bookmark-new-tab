@@ -1,5 +1,5 @@
 import React from 'react';
-import { Settings, AlertCircle, Loader2 } from 'lucide-react';
+import { Settings, AlertCircle, Loader2, Brain } from 'lucide-react';
 import {
     DndContext,
     DragEndEvent,
@@ -16,6 +16,7 @@ import { SearchBox } from './SearchBox';
 import { BookmarkItem } from './BookmarkItem';
 import { FolderColumn } from './FolderColumn';
 import { SettingsPanel } from './SettingsPanel';
+import { AIAnalysisPanel } from './AIAnalysisPanel';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useSettings } from '@/hooks/useSettings';
 import { chunkArray, countItemsInFolder, getFolderPath } from '@/utils/bookmark-helpers';
@@ -49,6 +50,7 @@ export function App() {
     } = useSettings();
 
     const [activeBookmark, setActiveBookmark] = React.useState<Bookmark | null>(null);
+    const [isAIAnalysisOpen, setIsAIAnalysisOpen] = React.useState(false);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -364,6 +366,16 @@ export function App() {
             }}>
                 {/* Header */}
                 <header className="relative p-4">
+                    {/* AI Analysis Button */}
+                    <button
+                        onClick={() => setIsAIAnalysisOpen(true)}
+                        className="absolute top-4 left-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                        aria-label="AI Analysis"
+                        tabIndex={-1}
+                    >
+                        <Brain className="w-5 h-5" />
+                    </button>
+
                     {/* Settings Button */}
                     <button
                         id="settings-toggle"
@@ -395,6 +407,13 @@ export function App() {
                     onClose={closeSettings}
                     onUpdateMaxEntries={updateMaxEntries}
                     onUpdateShowDebugInfo={updateShowDebugInfo}
+                />
+
+                {/* AI Analysis Panel */}
+                <AIAnalysisPanel
+                    isOpen={isAIAnalysisOpen}
+                    onClose={() => setIsAIAnalysisOpen(false)}
+                    bookmarks={Object.values(allBookmarks).filter(b => !b.isFolder)}
                 />
 
                 {/* Drag Overlay */}

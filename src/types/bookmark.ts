@@ -22,6 +22,10 @@ export interface BookmarkTreeNode {
 export interface Config {
     maxEntriesPerColumn: number;
     showDebugInfo: boolean;
+    // AI配置
+    aiApiUrl?: string;
+    aiApiKey?: string;
+    aiModel?: string;
 }
 
 export interface SearchResult {
@@ -42,4 +46,30 @@ export interface DragData {
     bookmarkId: string;
     sourceIndex: number;
     sourceParentId: string;
+}
+
+// AI分析相关类型
+export type BookmarkDimension = 'work' | 'learn' | 'fun' | 'tool' | 'other';
+
+export interface BookmarkAnalysis {
+    bookmark: Bookmark;
+    score: number; // 1-10的重要性评分
+    dimension: BookmarkDimension;
+    reason: string;
+}
+
+export interface BookmarkRecommendation {
+    bookmark: Bookmark;
+    score: number;
+    dimension: BookmarkDimension;
+    reason: string;
+    priority: number; // 1-5的推荐优先级
+    recommendReason: string;
+}
+
+export interface AIConfig {
+    apiUrl: string;
+    apiKey: string;
+    model: string;
+    batchSize: number;
 } 
