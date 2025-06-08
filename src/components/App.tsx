@@ -358,78 +358,84 @@ export function App() {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <div className="min-h-screen w-full bg-black" style={{
+            <div className="min-h-screen w-full bg-black relative" style={{
                 backgroundImage: 'url(../girl-grey.jpg)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
                 backgroundAttachment: 'fixed'
             }}>
-                {/* Header */}
-                <header className="relative p-4">
-                    {/* AI Analysis Button */}
-                    <button
-                        onClick={() => setIsAIAnalysisOpen(true)}
-                        className="absolute top-4 left-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
-                        aria-label="AI Analysis"
-                        tabIndex={-1}
-                    >
-                        <Brain className="w-5 h-5" />
-                    </button>
+                {/* 黑色遮罩层 */}
+                <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
 
-                    {/* Settings Button */}
-                    <button
-                        id="settings-toggle"
-                        onClick={toggleSettings}
-                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
-                        aria-label="Settings"
-                        tabIndex={-1}
-                    >
-                        <Settings className="w-5 h-5" />
-                    </button>
+                {/* 内容容器 */}
+                <div className="relative z-10">
+                    {/* Header */}
+                    <header className="relative p-4">
+                        {/* AI Analysis Button */}
+                        <button
+                            onClick={() => setIsAIAnalysisOpen(true)}
+                            className="absolute top-4 left-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
+                            aria-label="AI Analysis"
+                            tabIndex={-1}
+                        >
+                            <Brain className="w-5 h-5" />
+                        </button>
 
-                    {/* Search Box */}
-                    <SearchBox
-                        value={searchTerm}
-                        onSearch={searchBookmarks}
-                        onClear={clearSearch}
+                        {/* Settings Button */}
+                        <button
+                            id="settings-toggle"
+                            onClick={toggleSettings}
+                            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
+                            aria-label="Settings"
+                            tabIndex={-1}
+                        >
+                            <Settings className="w-5 h-5" />
+                        </button>
+
+                        {/* Search Box */}
+                        <SearchBox
+                            value={searchTerm}
+                            onSearch={searchBookmarks}
+                            onClear={clearSearch}
+                        />
+                    </header>
+
+                    {/* Main Content */}
+                    <main id="bookmarks-container" className="max-w-none mx-auto pl-4 pr-0 pb-4">
+                        {searchTerm ? renderSearchResults() : renderBookmarkFolders()}
+                    </main>
+
+                    {/* Settings Panel */}
+                    <SettingsPanel
+                        isOpen={isSettingsOpen}
+                        config={config}
+                        onClose={closeSettings}
+                        onUpdateMaxEntries={updateMaxEntries}
+                        onUpdateShowDebugInfo={updateShowDebugInfo}
                     />
-                </header>
 
-                {/* Main Content */}
-                <main id="bookmarks-container" className="max-w-none mx-auto pl-4 pr-0 pb-4">
-                    {searchTerm ? renderSearchResults() : renderBookmarkFolders()}
-                </main>
+                    {/* AI Analysis Panel */}
+                    <AIAnalysisPanel
+                        isOpen={isAIAnalysisOpen}
+                        onClose={() => setIsAIAnalysisOpen(false)}
+                        bookmarks={Object.values(allBookmarks).filter(b => !b.isFolder)}
+                    />
 
-                {/* Settings Panel */}
-                <SettingsPanel
-                    isOpen={isSettingsOpen}
-                    config={config}
-                    onClose={closeSettings}
-                    onUpdateMaxEntries={updateMaxEntries}
-                    onUpdateShowDebugInfo={updateShowDebugInfo}
-                />
-
-                {/* AI Analysis Panel */}
-                <AIAnalysisPanel
-                    isOpen={isAIAnalysisOpen}
-                    onClose={() => setIsAIAnalysisOpen(false)}
-                    bookmarks={Object.values(allBookmarks).filter(b => !b.isFolder)}
-                />
-
-                {/* Drag Overlay */}
-                <DragOverlay>
-                    {activeBookmark ? (
-                        <div className="bg-blue-500/20 backdrop-blur-sm border border-blue-400/50 rounded-lg p-2 rotate-3 scale-105">
-                            <BookmarkItem
-                                bookmark={activeBookmark}
-                                onDelete={() => { }}
-                                showUrl={false}
-                                showDebugInfo={config.showDebugInfo}
-                            />
-                        </div>
-                    ) : null}
-                </DragOverlay>
+                    {/* Drag Overlay */}
+                    <DragOverlay>
+                        {activeBookmark ? (
+                            <div className="bg-blue-500/20 backdrop-blur-sm border border-blue-400/50 rounded-lg p-2 rotate-3 scale-105">
+                                <BookmarkItem
+                                    bookmark={activeBookmark}
+                                    onDelete={() => { }}
+                                    showUrl={false}
+                                    showDebugInfo={config.showDebugInfo}
+                                />
+                            </div>
+                        ) : null}
+                    </DragOverlay>
+                </div>
             </div>
         </DndContext>
     );
