@@ -1,9 +1,10 @@
-import React from 'react';
-import { Trash2, GripVertical } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
+import { Trash2, GripVertical, Star } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Bookmark } from '@/types/bookmark';
 import { highlightSearchTerm } from '@/utils/bookmark-helpers';
+import { BookmarkRating, getRating } from '@/utils/bookmark-ratings';
 
 interface BookmarkItemProps {
     bookmark: Bookmark;
@@ -25,6 +26,16 @@ export function BookmarkItem({
 }: BookmarkItemProps) {
     // 搜索模式下禁用拖拽功能
     const isSearchMode = !!searchTerm;
+
+    // 评分状态
+    const [rating, setRating] = useState<BookmarkRating | null>(null);
+
+    // 加载评分
+    useEffect(() => {
+        if (bookmark.url) {
+            getRating(bookmark.url).then(setRating).catch(() => setRating(null));
+        }
+    }, [bookmark.url]);
 
     const {
         attributes,
@@ -75,6 +86,21 @@ export function BookmarkItem({
         return searchTerm ? highlightSearchTerm(cleanUrl, searchTerm) : cleanUrl;
     };
 
+    // 获取评分星级
+    const getStarRating = (score: number) => {
+        const fullStars = Math.floor(score / 20); // 100分满分，每20分一颗星
+        const halfStar = (score % 20) >= 10; // 10分以上显示半星
+        return { fullStars, halfStar };
+    };
+
+    // 获取评分颜色
+    const getRatingColor = (score: number) => {
+        if (score >= 80) return 'text-green-400';
+        if (score >= 60) return 'text-yellow-400';
+        if (score >= 40) return 'text-orange-400';
+        return 'text-red-400';
+    };
+
     return (
         <div
             ref={setNodeRef}
@@ -103,10 +129,45 @@ export function BookmarkItem({
                     onClick={handleLinkClick}
                 >
                     <div className="mb-0.5">
-                        <h3
-                            className="text-sm font-medium text-gray-200 truncate leading-tight"
-                            dangerouslySetInnerHTML={{ __html: getHighlightedTitle() }}
-                        />
+                        <div className="flex items-center justify-between">
+                            <h3
+                                className="text-sm font-medium text-gray-200 truncate leading-tight flex-1"
+                                dangerouslySetInnerHTML={{ __html: getHighlightedTitle() }}
+                            />
+
+                            {/* AI评分显示 */}
+                            {rating && (
+                                <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
+                                    {/* 星级显示 */}
+                                    <div className="flex items-center">
+                                        {[...Array(getStarRating(rating.score).fullStars)].map((_, i) => (
+                                            <Star key={i} className={`w-3 h-3 ${getRatingColor(rating.score)} fill-current`} />
+                                        ))}
+                                        {getStarRating(rating.score).halfStar && (
+                                            <Star className={`w-3 h-3 ${getRatingColor(rating.score)} fill-current opacity-50`} />
+                                        )}
+                                    </div>
+
+                                    {/* 分数显示 */}
+                                    <span className={`text-xs ${getRatingColor(rating.score)} font-medium`}>
+                                        {rating.score}
+                                    </span>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* AI评分详情 */}
+                        {rating && (
+                            <div className="text-xs text-gray-400 mt-0.5">
+                                <span className="text-gray-500">{rating.dimension}</span>
+                                {rating.reason && (
+                                    <span className="ml-2 text-gray-400" title={rating.reason}>
+                                        {rating.reason.length > 50 ? rating.reason.substring(0, 50) + '...' : rating.reason}
+                                    </span>
+                                )}
+                            </div>
+                        )}
+
                         {/* Debug Info */}
                         {showDebugInfo && (
                             <div className="text-xs text-yellow-400 opacity-70 mt-0.5">

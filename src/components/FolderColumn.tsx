@@ -1,10 +1,11 @@
-import React from 'react';
-import { Folder, Eraser } from 'lucide-react';
+import React, { useState } from 'react';
+import { Folder, Eraser, Brain } from 'lucide-react';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { Bookmark } from '@/types/bookmark';
 import { BookmarkItem } from './BookmarkItem';
 import { getFolderColor } from '@/utils/bookmark-helpers';
+import { useBookmarkRatings } from '@/hooks/useBookmarkRatings';
 
 interface FolderColumnProps {
     title: string;
@@ -54,7 +55,10 @@ export function FolderColumn({
     onUpdateBookmark,
     showDebugInfo = false
 }: FolderColumnProps) {
+    const [isRating, setIsRating] = useState(false);
     const accentColor = folderId ? getAccentColor(folderId) : '#3b82f6';
+
+    const { rateBookmarks, isLoading: ratingsLoading, error: ratingsError, clearError } = useBookmarkRatings();
 
     const { setNodeRef, isOver } = useDroppable({
         id: folderId || 'root',
@@ -101,6 +105,39 @@ export function FolderColumn({
         }
     };
 
+    // AI评分功能
+    const handleAIRating = async () => {
+        const bookmarksWithUrls = bookmarks.filter(bookmark => bookmark.url);
+
+        if (bookmarksWithUrls.length === 0) {
+            alert('此文件夹中没有可评分的书签');
+            return;
+        }
+
+        const confirmed = window.confirm(
+            `将对 ${bookmarksWithUrls.length} 个书签进行AI评分，继续吗？`
+        );
+
+        if (!confirmed) {
+            return;
+        }
+
+        setIsRating(true);
+        clearError();
+
+        try {
+            const ratings = await rateBookmarks(bookmarksWithUrls);
+            if (ratings && ratings.length > 0) {
+                alert(`成功评分 ${ratings.length} 个书签！`);
+            }
+        } catch (error) {
+            console.error('AI评分失败:', error);
+            alert(`评分失败: ${error instanceof Error ? error.message : '未知错误'}`);
+        } finally {
+            setIsRating(false);
+        }
+    };
+
     return (
         <div
             ref={setNodeRef}
@@ -125,6 +162,16 @@ export function FolderColumn({
                         {subtitle && (
                             <span className="text-xs text-gray-400">{subtitle}</span>
                         )}
+
+                        {/* AI评分按钮 */}
+                        <button
+                            onClick={handleAIRating}
+                            disabled={isRating || ratingsLoading}
+                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 text-gray-400 hover:text-purple-300 hover:bg-white/10 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                            title="AI评分书签"
+                        >
+                            <Brain className={`w-3 h-3 ${isRating ? 'animate-pulse' : ''}`} />
+                        </button>
 
                         {/* 清理按钮 */}
                         <button
