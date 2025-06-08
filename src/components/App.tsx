@@ -159,7 +159,7 @@ export function App() {
 
             // 计算新的索引位置
             // 如果向后移动，新位置是目标位置+1；如果向前移动，新位置就是目标位置
-            const newIndex = activeIndex < targetIndex ? targetIndex + 1 : targetIndex;
+            const newIndex = activeIndex <= targetIndex ? targetIndex + 1 : targetIndex;
 
             console.log(`🔄 重排序: ${activeBookmark.title} 从位置 ${activeIndex} 到 ${newIndex}`);
 

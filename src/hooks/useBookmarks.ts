@@ -102,15 +102,8 @@ export function useBookmarks() {
     const moveBookmark = useCallback(async (bookmarkId: string, targetFolderId: string, newIndex: number) => {
         console.log('🔧 Hook移动书签:', { bookmarkId, targetFolderId, newIndex });
 
-        try {
-            const result = await moveBookmarkAPI(bookmarkId, {
-                parentId: targetFolderId,
-                index: newIndex
-            });
-
-            console.log('✅ 书签移动成功:', result);
-
-            // 增量更新：更新书签和相关文件夹的children
+        // 乐观更新：立即更新本地状态，避免拖拽后的闪烁
+        const performOptimisticUpdate = (expectedIndex: number) => {
             setAllBookmarks(prev => {
                 const updated = { ...prev };
                 const bookmark = updated[bookmarkId];
@@ -121,13 +114,13 @@ export function useBookmarks() {
                 }
 
                 const oldParentId = bookmark.parentId;
-                const newParentId = result.parentId || '';
+                const newParentId = targetFolderId;
 
                 // 1. 更新书签本身
                 updated[bookmarkId] = {
                     ...bookmark,
                     parentId: newParentId,
-                    index: result.index || 0
+                    index: expectedIndex
                 };
 
                 // 2. 如果是跨文件夹移动，更新旧父文件夹的children
@@ -144,7 +137,7 @@ export function useBookmarks() {
                     // 移除可能存在的重复项
                     const filteredChildren = newChildren.filter(id => id !== bookmarkId);
                     // 插入到正确位置
-                    filteredChildren.splice(result.index || 0, 0, bookmarkId);
+                    filteredChildren.splice(expectedIndex, 0, bookmarkId);
 
                     updated[newParentId] = {
                         ...updated[newParentId],
@@ -152,7 +145,7 @@ export function useBookmarks() {
                     };
                 }
 
-                console.log('📝 本地状态已更新:', {
+                console.log('⚡ 乐观更新完成:', {
                     bookmark: updated[bookmarkId],
                     oldParent: oldParentId ? updated[oldParentId] : null,
                     newParent: updated[newParentId]
@@ -160,6 +153,24 @@ export function useBookmarks() {
 
                 return updated;
             });
+        };
+
+        // 立即执行乐观更新
+        performOptimisticUpdate(newIndex);
+
+        try {
+            const result = await moveBookmarkAPI(bookmarkId, {
+                parentId: targetFolderId,
+                index: newIndex
+            });
+
+            console.log('✅ 书签移动成功:', result);
+
+            // 如果API返回的index与预期不同，进行校正
+            if (result.index !== newIndex) {
+                console.log('🔧 校正索引:', { expected: newIndex, actual: result.index });
+                performOptimisticUpdate(result.index || 0);
+            }
 
             // 如果在搜索模式，只刷新搜索结果（不重新加载所有书签）
             if (searchTerm) {
@@ -169,8 +180,11 @@ export function useBookmarks() {
         } catch (err) {
             console.error('❌ 移动书签失败:', err);
             setError(err instanceof Error ? err.message : 'Failed to move bookmark');
+
+            // 如果API调用失败，恢复原始状态
+            await loadBookmarks();
         }
-    }, [searchBookmarks, searchTerm]);
+    }, [searchBookmarks, searchTerm, loadBookmarks]);
 
     // Get organized folder data
     const getFolderData = useCallback(() => {
