@@ -225,11 +225,9 @@ export function BookmarkItem({
                         {rating && (
                             <div className="text-xs mt-0.5 flex items-center space-x-2">
                                 {/* 维度标签 */}
-                                <div className={`inline-flex items-center px-2 py-0.5 rounded-full ${getDimensionStyle(rating.dimension).bgColor} ${getDimensionStyle(rating.dimension).borderColor} border`}>
-                                    <span className={`text-xs font-medium ${getDimensionStyle(rating.dimension).textColor}`}>
-                                        ● {getDimensionStyle(rating.dimension).label}
-                                    </span>
-                                </div>
+                                <span className={`text-xs font-medium ${getDimensionStyle(rating.dimension).textColor}`}>
+                                    ● {getDimensionStyle(rating.dimension).label}
+                                </span>
 
                                 {/* 评分原因 */}
                                 {rating.reason && (
