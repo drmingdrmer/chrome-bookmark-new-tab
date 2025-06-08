@@ -301,7 +301,10 @@ export function App() {
         }
 
         return (
-            <div className="flex space-x-4 overflow-x-auto pb-4">
+            <div className="grid gap-3" style={{
+                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                justifyContent: 'start'
+            }}>
                 {columns}
             </div>
         );
@@ -360,7 +363,7 @@ export function App() {
                 </header>
 
                 {/* Main Content */}
-                <main id="bookmarks-container" className="px-4 pb-4">
+                <main id="bookmarks-container" className="max-w-none mx-auto px-4 pb-4">
                     {searchTerm ? renderSearchResults() : renderBookmarkFolders()}
                 </main>
 

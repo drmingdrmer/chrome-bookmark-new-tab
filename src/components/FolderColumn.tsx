@@ -32,7 +32,7 @@ export function FolderColumn({
     return (
         <div
             ref={setNodeRef}
-            className={`flex-shrink-0 w-80 rounded-xl border border-white/10 overflow-hidden transition-all duration-200 ${isOver ? 'ring-2 ring-blue-400/50 border-blue-400/50' : ''
+            className={`w-full rounded-xl border border-white/10 overflow-hidden transition-all duration-200 ${isOver ? 'ring-2 ring-blue-400/50 border-blue-400/50' : ''
                 }`}
             style={{ backgroundColor }}
         >
