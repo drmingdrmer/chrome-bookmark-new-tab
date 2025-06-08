@@ -125,13 +125,25 @@ export function useBookmarks() {
 
                 // 2. 如果是跨文件夹移动，更新旧父文件夹的children
                 if (oldParentId !== newParentId && updated[oldParentId]?.children) {
+                    const remainingChildren = updated[oldParentId].children!.filter(id => id !== bookmarkId);
+
                     updated[oldParentId] = {
                         ...updated[oldParentId],
-                        children: updated[oldParentId].children!.filter(id => id !== bookmarkId)
+                        children: remainingChildren
                     };
+
+                    // 重新计算旧文件夹中剩余书签的index
+                    remainingChildren.forEach((childId, index) => {
+                        if (updated[childId] && !updated[childId].isFolder) {
+                            updated[childId] = {
+                                ...updated[childId],
+                                index: index
+                            };
+                        }
+                    });
                 }
 
-                // 3. 更新新父文件夹的children
+                // 3. 更新新父文件夹的children和重新计算所有子项的index
                 if (updated[newParentId]?.children) {
                     const newChildren = [...updated[newParentId].children!];
                     // 移除可能存在的重复项
@@ -143,6 +155,16 @@ export function useBookmarks() {
                         ...updated[newParentId],
                         children: filteredChildren
                     };
+
+                    // 重新计算该文件夹中所有书签的index
+                    filteredChildren.forEach((childId, index) => {
+                        if (updated[childId] && !updated[childId].isFolder) {
+                            updated[childId] = {
+                                ...updated[childId],
+                                index: index
+                            };
+                        }
+                    });
                 }
 
                 console.log('⚡ 乐观更新完成:', {

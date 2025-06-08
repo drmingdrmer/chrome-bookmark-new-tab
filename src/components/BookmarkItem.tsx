@@ -92,6 +92,10 @@ export function BookmarkItem({
                             className="text-sm font-medium text-white truncate leading-tight"
                             dangerouslySetInnerHTML={{ __html: getHighlightedTitle() }}
                         />
+                        {/* Debug Info */}
+                        <div className="text-xs text-yellow-400 opacity-70 mt-0.5">
+                            ID: {bookmark.id} | Index: {bookmark.index ?? 'undefined'}
+                        </div>
                     </div>
 
                     {showUrl && bookmark.url && (
