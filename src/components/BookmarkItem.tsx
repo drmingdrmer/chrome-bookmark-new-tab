@@ -67,7 +67,12 @@ export function BookmarkItem({
     };
 
     const getHighlightedUrl = () => {
-        return searchTerm && bookmark.url ? highlightSearchTerm(bookmark.url, searchTerm) : bookmark.url;
+        if (!bookmark.url) return '';
+
+        // 移除协议前缀
+        const cleanUrl = bookmark.url.replace(/^https?:\/\//, '');
+
+        return searchTerm ? highlightSearchTerm(cleanUrl, searchTerm) : cleanUrl;
     };
 
     return (
@@ -99,7 +104,7 @@ export function BookmarkItem({
                 >
                     <div className="mb-0.5">
                         <h3
-                            className="text-sm font-medium text-gray-300 truncate leading-tight"
+                            className="text-sm font-medium text-gray-200 truncate leading-tight"
                             dangerouslySetInnerHTML={{ __html: getHighlightedTitle() }}
                         />
                         {/* Debug Info */}
@@ -112,7 +117,7 @@ export function BookmarkItem({
 
                     {showUrl && bookmark.url && (
                         <p
-                            className="text-sm text-gray-400 truncate leading-tight"
+                            className="text-sm text-gray-500 truncate leading-tight"
                             dangerouslySetInnerHTML={{ __html: getHighlightedUrl() || '' }}
                         />
                     )}
