@@ -58,7 +58,14 @@ export function FolderColumn({
     const [isRating, setIsRating] = useState(false);
     const accentColor = folderId ? getAccentColor(folderId) : '#3b82f6';
 
-    const { rateBookmarks, isLoading: ratingsLoading, error: ratingsError, clearError } = useBookmarkRatings();
+    const {
+        rateBookmarks,
+        isLoading: ratingsLoading,
+        error: ratingsError,
+        progressStep,
+        showSuccess,
+        clearError
+    } = useBookmarkRatings();
 
     const { setNodeRef, isOver } = useDroppable({
         id: folderId || 'root',
@@ -115,7 +122,7 @@ export function FolderColumn({
         }
 
         const confirmed = window.confirm(
-            `将对 ${bookmarksWithUrls.length} 个书签进行AI评分，继续吗？`
+            `将对 ${bookmarksWithUrls.length} 个书签进行AI评分，这可能需要几秒钟时间。继续吗？`
         );
 
         if (!confirmed) {
@@ -128,7 +135,8 @@ export function FolderColumn({
         try {
             const ratings = await rateBookmarks(bookmarksWithUrls);
             if (ratings && ratings.length > 0) {
-                alert(`成功评分 ${ratings.length} 个书签！`);
+                // 不显示alert，用户已经能看到进度完成状态
+                console.log(`✅ 成功评分 ${ratings.length} 个书签！`);
             }
         } catch (error) {
             console.error('AI评分失败:', error);
@@ -167,10 +175,30 @@ export function FolderColumn({
                         <button
                             onClick={handleAIRating}
                             disabled={isRating || ratingsLoading}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 text-gray-400 hover:text-purple-300 hover:bg-white/10 rounded disabled:opacity-50 disabled:cursor-not-allowed"
-                            title="AI评分书签"
+                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 text-gray-400 hover:text-purple-300 hover:bg-white/10 rounded disabled:opacity-50 disabled:cursor-not-allowed relative"
+                            title={ratingsLoading && progressStep ? progressStep : "AI评分书签"}
                         >
-                            <Brain className={`w-3 h-3 ${isRating ? 'animate-pulse' : ''}`} />
+                            <Brain className={`w-3 h-3 ${isRating || ratingsLoading ? 'animate-pulse' : ''}`} />
+
+                            {/* 进度指示器 */}
+                            {(ratingsLoading && progressStep) && (
+                                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-black/90 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap z-20 shadow-lg border border-white/20">
+                                    <div className="flex items-center space-x-2">
+                                        <div className="w-2 h-2 bg-purple-400 rounded-full animate-pulse"></div>
+                                        <span>{progressStep}</span>
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* 成功指示器 */}
+                            {showSuccess && (
+                                <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-green-900/90 text-white text-xs px-3 py-1.5 rounded-lg whitespace-nowrap z-20 shadow-lg border border-green-400/30">
+                                    <div className="flex items-center space-x-2">
+                                        <div className="w-2 h-2 bg-green-400 rounded-full"></div>
+                                        <span>✅ 评分完成！</span>
+                                    </div>
+                                </div>
+                            )}
                         </button>
 
                         {/* 清理按钮 */}

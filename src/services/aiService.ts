@@ -38,18 +38,29 @@ export class AIService {
 
 
     // 批量分析书签
-    async analyzeBatch(bookmarks: Bookmark[], batchIndex = 1): Promise<BookmarkAnalysis[]> {
+    async analyzeBatch(
+        bookmarks: Bookmark[],
+        batchIndex = 1,
+        onProgress?: (step: string) => void
+    ): Promise<BookmarkAnalysis[]> {
         if (!this.isConfigValid()) {
             throw new Error('AI配置无效，请先配置API设置');
         }
 
-        const prompt = this.buildBatchAnalysisPrompt(bookmarks);
-
         try {
+            onProgress?.('🔍 正在准备分析请求...');
+            const prompt = this.buildBatchAnalysisPrompt(bookmarks);
+
+            onProgress?.('🚀 正在发送请求到AI服务，请等待响应...');
             const response = await this.callAPI(prompt);
+
+            onProgress?.('⚙️ 正在解析AI分析结果...');
             const results = this.parseBatchAnalysisResponse(response, bookmarks);
+
+            onProgress?.('✅ 分析完成');
             return results;
         } catch (error) {
+            onProgress?.('❌ 分析失败');
             throw new Error(`批次 ${batchIndex} 分析失败: ${error instanceof Error ? error.message : String(error)}`);
         }
     }

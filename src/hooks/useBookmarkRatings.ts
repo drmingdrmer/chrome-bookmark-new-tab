@@ -7,6 +7,8 @@ export function useBookmarkRatings() {
     const [ratings, setRatings] = useState<Record<string, BookmarkRating>>({});
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [progressStep, setProgressStep] = useState<string>('');
+    const [showSuccess, setShowSuccess] = useState(false);
 
     const { analyzeBatch, isConfigValid } = useAI();
 
@@ -33,6 +35,8 @@ export function useBookmarkRatings() {
 
         setIsLoading(true);
         setError(null);
+        setShowSuccess(false);
+        setProgressStep('🔍 正在检查书签...');
 
         try {
             // 过滤掉已有评分的书签（可选：如果想要重新评分，移除这个过滤）
@@ -45,8 +49,14 @@ export function useBookmarkRatings() {
                 return;
             }
 
+            setProgressStep(`📝 准备分析 ${bookmarksToRate.length} 个书签...`);
+
             // 调用AI批量分析
-            const analyses = await analyzeBatch(bookmarksToRate);
+            const analyses = await analyzeBatch(bookmarksToRate, (step) => {
+                setProgressStep(step);
+            });
+
+            setProgressStep('🔄 正在转换评分格式...');
 
             // 转换为评分格式
             const newRatings: BookmarkRating[] = analyses.map(analysis => ({
@@ -56,6 +66,8 @@ export function useBookmarkRatings() {
                 reason: analysis.reason,
                 timestamp: Date.now()
             }));
+
+            setProgressStep('💾 正在保存评分结果...');
 
             // 保存到本地存储
             await saveRatings(newRatings);
@@ -67,13 +79,21 @@ export function useBookmarkRatings() {
             });
             setRatings(updatedRatings);
 
+            setProgressStep('✅ 评分完成');
+            setShowSuccess(true);
+
             return newRatings;
         } catch (error) {
             const errorMessage = error instanceof Error ? error.message : '评分失败';
             setError(errorMessage);
+            setProgressStep('❌ 评分失败');
             throw error;
         } finally {
-            setIsLoading(false);
+            setTimeout(() => {
+                setIsLoading(false);
+                setProgressStep('');
+                setShowSuccess(false);
+            }, 2000); // 显示完成状态2秒后清除
         }
     }, [analyzeBatch, isConfigValid, ratings]);
 
@@ -116,6 +136,8 @@ export function useBookmarkRatings() {
         ratings,
         isLoading,
         error,
+        progressStep,
+        showSuccess,
         rateBookmarks,
         getBookmarkRating,
         hasRating,

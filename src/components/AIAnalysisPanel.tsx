@@ -54,7 +54,10 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
         try {
             // 只分析前50个书签以避免过长的API调用
             const bookmarksToAnalyze = bookmarks.slice(0, 50);
-            await analyzeBatch(bookmarksToAnalyze);
+            await analyzeBatch(bookmarksToAnalyze, (step) => {
+                // 进度信息可以在控制台查看
+                console.log(`📊 分析进度: ${step}`);
+            });
         } catch (error) {
             console.error('分析失败:', error);
         } finally {
@@ -195,8 +198,8 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
                                                 handleGetRecommendations(dimension as BookmarkDimension);
                                             }}
                                             className={`px-3 py-1.5 text-sm rounded-lg transition-colors duration-200 ${selectedDimension === dimension
-                                                    ? 'bg-purple-600 text-white'
-                                                    : 'bg-white/10 text-gray-300 hover:bg-white/20'
+                                                ? 'bg-purple-600 text-white'
+                                                : 'bg-white/10 text-gray-300 hover:bg-white/20'
                                                 }`}
                                         >
                                             {label} ({count})

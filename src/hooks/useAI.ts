@@ -84,11 +84,14 @@ export function useAI() {
 
 
     // 批量分析书签
-    const analyzeBatch = useCallback(async (bookmarks: Bookmark[]) => {
+    const analyzeBatch = useCallback(async (
+        bookmarks: Bookmark[],
+        onProgress?: (step: string) => void
+    ) => {
         setState(prev => ({ ...prev, isLoading: true, error: null }));
 
         try {
-            const analyses = await aiService.analyzeBatch(bookmarks);
+            const analyses = await aiService.analyzeBatch(bookmarks, 1, onProgress);
             setState(prev => ({
                 ...prev,
                 isLoading: false,
