@@ -14,6 +14,7 @@ interface FolderColumnProps {
     bookmarks: Bookmark[];
     onDeleteBookmark: (bookmarkId: string) => void;
     onUpdateBookmark?: (bookmarkId: string, updates: Partial<Bookmark>) => void;
+    showDebugInfo?: boolean;
 }
 
 // Color palette for accent lines
@@ -50,7 +51,8 @@ export function FolderColumn({
     folderPath,
     bookmarks,
     onDeleteBookmark,
-    onUpdateBookmark
+    onUpdateBookmark,
+    showDebugInfo = false
 }: FolderColumnProps) {
     const accentColor = folderId ? getAccentColor(folderId) : '#3b82f6';
 
@@ -158,6 +160,7 @@ export function FolderColumn({
                                     bookmark={bookmark}
                                     onDelete={onDeleteBookmark}
                                     showUrl={true}
+                                    showDebugInfo={showDebugInfo}
                                 />
                             ))}
                         </SortableContext>

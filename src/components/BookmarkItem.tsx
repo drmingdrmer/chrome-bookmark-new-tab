@@ -12,6 +12,7 @@ interface BookmarkItemProps {
     onDelete: (bookmarkId: string) => void;
     showUrl?: boolean;
     index?: number;
+    showDebugInfo?: boolean;
 }
 
 export function BookmarkItem({
@@ -19,7 +20,8 @@ export function BookmarkItem({
     searchTerm = '',
     folderPath = '',
     onDelete,
-    showUrl = true
+    showUrl = true,
+    showDebugInfo = false
 }: BookmarkItemProps) {
     // 搜索模式下禁用拖拽功能
     const isSearchMode = !!searchTerm;
@@ -101,9 +103,11 @@ export function BookmarkItem({
                             dangerouslySetInnerHTML={{ __html: getHighlightedTitle() }}
                         />
                         {/* Debug Info */}
-                        <div className="text-xs text-yellow-400 opacity-70 mt-0.5">
-                            ID: {bookmark.id} | Index: {bookmark.index ?? 'undefined'}
-                        </div>
+                        {showDebugInfo && (
+                            <div className="text-xs text-yellow-400 opacity-70 mt-0.5">
+                                ID: {bookmark.id} | Index: {bookmark.index ?? 'undefined'}
+                            </div>
+                        )}
                     </div>
 
                     {showUrl && bookmark.url && (

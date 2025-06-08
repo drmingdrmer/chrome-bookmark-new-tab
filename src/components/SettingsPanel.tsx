@@ -7,23 +7,28 @@ interface SettingsPanelProps {
     config: Config;
     onClose: () => void;
     onUpdateMaxEntries: (maxEntries: number) => void;
+    onUpdateShowDebugInfo: (showDebugInfo: boolean) => void;
 }
 
 export function SettingsPanel({
     isOpen,
     config,
     onClose,
-    onUpdateMaxEntries
+    onUpdateMaxEntries,
+    onUpdateShowDebugInfo
 }: SettingsPanelProps) {
     const [maxEntries, setMaxEntries] = useState(config.maxEntriesPerColumn);
+    const [showDebugInfo, setShowDebugInfo] = useState(config.showDebugInfo);
 
     const handleSave = () => {
         onUpdateMaxEntries(maxEntries);
+        onUpdateShowDebugInfo(showDebugInfo);
         onClose();
     };
 
     const handleReset = () => {
         setMaxEntries(20);
+        setShowDebugInfo(false);
     };
 
     if (!isOpen) return null;
@@ -89,6 +94,31 @@ export function SettingsPanel({
                                 Controls how many bookmarks appear in each column before splitting into multiple columns.
                             </p>
                         </div>
+                    </div>
+
+                    {/* Show Debug Info Setting */}
+                    <div>
+                        <label className="block text-sm font-medium text-white mb-3">
+                            Debug Information
+                        </label>
+                        <div className="flex items-center space-x-3">
+                            <input
+                                id="show-debug-info"
+                                type="checkbox"
+                                checked={showDebugInfo}
+                                onChange={(e) => setShowDebugInfo(e.target.checked)}
+                                className="w-4 h-4 text-blue-600 bg-white/10 border-white/20 rounded focus:ring-blue-500 focus:ring-2"
+                            />
+                            <label
+                                htmlFor="show-debug-info"
+                                className="text-sm text-gray-300 cursor-pointer"
+                            >
+                                Show bookmark ID and Index
+                            </label>
+                        </div>
+                        <p className="text-xs text-gray-400 mt-2">
+                            Display debugging information (ID and Index) below each bookmark title.
+                        </p>
                     </div>
 
                     {/* Action Buttons */}

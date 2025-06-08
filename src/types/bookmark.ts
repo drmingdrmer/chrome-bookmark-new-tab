@@ -21,6 +21,7 @@ export interface BookmarkTreeNode {
 
 export interface Config {
     maxEntriesPerColumn: number;
+    showDebugInfo: boolean;
 }
 
 export interface SearchResult {

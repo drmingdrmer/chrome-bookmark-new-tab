@@ -45,6 +45,7 @@ export function App() {
         toggleSettings,
         closeSettings,
         updateMaxEntries,
+        updateShowDebugInfo,
     } = useSettings();
 
     const [activeBookmark, setActiveBookmark] = React.useState<Bookmark | null>(null);
@@ -222,6 +223,7 @@ export function App() {
                             folderPath={folderPath}
                             onDelete={deleteBookmark}
                             showUrl={true}
+                            showDebugInfo={config.showDebugInfo}
                         />
                     ))}
                 </div>
@@ -248,6 +250,7 @@ export function App() {
                         bookmarks={chunk}
                         onDeleteBookmark={deleteBookmark}
                         onUpdateBookmark={updateBookmark}
+                        showDebugInfo={config.showDebugInfo}
                     />
                 );
             });
@@ -276,6 +279,7 @@ export function App() {
                         bookmarks={folderBookmarks}
                         onDeleteBookmark={deleteBookmark}
                         onUpdateBookmark={updateBookmark}
+                        showDebugInfo={config.showDebugInfo}
                     />
                 );
             } else {
@@ -293,6 +297,7 @@ export function App() {
                             bookmarks={chunk}
                             onDeleteBookmark={deleteBookmark}
                             onUpdateBookmark={updateBookmark}
+                            showDebugInfo={config.showDebugInfo}
                         />
                     );
                 });
@@ -389,6 +394,7 @@ export function App() {
                     config={config}
                     onClose={closeSettings}
                     onUpdateMaxEntries={updateMaxEntries}
+                    onUpdateShowDebugInfo={updateShowDebugInfo}
                 />
 
                 {/* Drag Overlay */}
@@ -399,6 +405,7 @@ export function App() {
                                 bookmark={activeBookmark}
                                 onDelete={() => { }}
                                 showUrl={false}
+                                showDebugInfo={config.showDebugInfo}
                             />
                         </div>
                     ) : null}

@@ -4,6 +4,7 @@ import { getStorageData, setStorageData } from '@/utils/chrome-api';
 
 const DEFAULT_CONFIG: Config = {
     maxEntriesPerColumn: 20,
+    showDebugInfo: false,
 };
 
 export function useSettings() {
@@ -57,6 +58,11 @@ export function useSettings() {
         }
     }, [saveSettings]);
 
+    // Update show debug info
+    const updateShowDebugInfo = useCallback(async (showDebugInfo: boolean) => {
+        await saveSettings({ showDebugInfo });
+    }, [saveSettings]);
+
     // Initialize settings on mount
     useEffect(() => {
         loadSettings();
@@ -70,6 +76,7 @@ export function useSettings() {
         toggleSettings,
         closeSettings,
         updateMaxEntries,
+        updateShowDebugInfo,
         saveSettings,
     };
 } 
