@@ -18,7 +18,7 @@ import { FolderColumn } from './FolderColumn';
 import { SettingsPanel } from './SettingsPanel';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useSettings } from '@/hooks/useSettings';
-import { chunkArray, countItemsInFolder } from '@/utils/bookmark-helpers';
+import { chunkArray, countItemsInFolder, getFolderPath } from '@/utils/bookmark-helpers';
 import { Bookmark } from '@/types/bookmark';
 
 export function App() {
@@ -260,6 +260,8 @@ export function App() {
 
             const itemCount = countItemsInFolder(folder, allBookmarks);
 
+            const folderPath = getFolderPath(folder, allBookmarks);
+
             if (itemCount <= config.maxEntriesPerColumn) {
                 // Single column for this folder
                 columns.push(
@@ -267,6 +269,7 @@ export function App() {
                         key={folder.id}
                         title={folder.title}
                         folderId={folder.id}
+                        folderPath={folderPath}
                         bookmarks={folderBookmarks}
                         onDeleteBookmark={deleteBookmark}
                     />
@@ -282,6 +285,7 @@ export function App() {
                             title={folder.title}
                             subtitle={subtitle}
                             folderId={folder.id}
+                            folderPath={folderPath}
                             bookmarks={chunk}
                             onDeleteBookmark={deleteBookmark}
                         />

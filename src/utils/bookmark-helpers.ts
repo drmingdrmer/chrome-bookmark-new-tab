@@ -78,38 +78,52 @@ export function collectAllBookmarks(nodes: BookmarkTreeNode[]): Record<string, B
 }
 
 /**
- * Get ordered top-level folders and direct bookmarks
+ * Get all folders and direct bookmarks (including nested folders) in correct order
  */
 export function getOrderedTopLevelFolders(
     bookmarkTreeNodes: BookmarkTreeNode[],
     allBookmarks: Record<string, Bookmark>
 ): { folders: Bookmark[]; directBookmarks: Bookmark[] } {
-    const orderedFolders: Bookmark[] = [];
+    const allFolders: Bookmark[] = [];
     const directBookmarks: Bookmark[] = [];
+
+    // Recursively collect all folders and direct bookmarks in order
+    function collectFoldersAndBookmarks(parentFolder: Bookmark, isTopLevel: boolean = false) {
+        if (!parentFolder.children) return;
+
+        // Use the children array to maintain order, then sort by index as fallback
+        const orderedChildren = parentFolder.children
+            .map(childId => allBookmarks[childId])
+            .filter(Boolean)
+            .sort((a, b) => (a.index || 0) - (b.index || 0));
+
+        orderedChildren.forEach(item => {
+            if (item.isFolder) {
+                allFolders.push(item);
+                // Recursively collect folders from this folder
+                collectFoldersAndBookmarks(item);
+            } else if (isTopLevel) {
+                directBookmarks.push(item);
+            }
+        });
+    }
 
     // Find Bookmarks Bar and Other Bookmarks in the tree
     bookmarkTreeNodes.forEach(rootNode => {
         if (rootNode.children) {
             rootNode.children.forEach(node => {
                 if (node.id === '1' || node.id === '2') { // Bookmarks Bar or Other Bookmarks
-                    if (node.children) {
-                        node.children.forEach(child => {
-                            const item = allBookmarks[child.id];
-                            if (item) {
-                                if (item.isFolder) {
-                                    orderedFolders.push(item);
-                                } else {
-                                    directBookmarks.push(item);
-                                }
-                            }
-                        });
+                    const rootFolder = allBookmarks[node.id];
+                    if (rootFolder) {
+                        // Collect direct bookmarks and folders from top level
+                        collectFoldersAndBookmarks(rootFolder, true);
                     }
                 }
             });
         }
     });
 
-    return { folders: orderedFolders, directBookmarks };
+    return { folders: allFolders, directBookmarks };
 }
 
 /**
@@ -162,6 +176,26 @@ export function getBookmarkFolderPath(
     }
 
     return path.join(' > ');
+}
+
+/**
+ * Get folder path for a folder itself
+ */
+export function getFolderPath(
+    folder: Bookmark,
+    allBookmarks: Record<string, Bookmark>
+): string {
+    const path: string[] = [];
+    let current = allBookmarks[folder.parentId];
+
+    while (current && current.id !== '0') {
+        if (current.id !== '1' && current.id !== '2') { // Skip root folders
+            path.unshift(current.title);
+        }
+        current = allBookmarks[current.parentId];
+    }
+
+    return path.length > 0 ? path.join(' > ') : '';
 }
 
 /**

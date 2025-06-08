@@ -10,6 +10,7 @@ interface FolderColumnProps {
     title: string;
     subtitle?: string;
     folderId?: string;
+    folderPath?: string;
     bookmarks: Bookmark[];
     onDeleteBookmark: (bookmarkId: string) => void;
 }
@@ -45,6 +46,7 @@ export function FolderColumn({
     title,
     subtitle,
     folderId,
+    folderPath,
     bookmarks,
     onDeleteBookmark
 }: FolderColumnProps) {
@@ -65,12 +67,18 @@ export function FolderColumn({
             {/* Header */}
             <div className="px-3 py-1.5 bg-black/20 backdrop-blur-sm">
                 <div className="flex items-center justify-between">
-                    <div className="flex items-center space-x-1.5">
-                        <Folder className="w-4 h-4 text-blue-300" />
-                        <h2 className="text-base font-semibold text-white">{title}</h2>
+                    <div className="flex items-center min-w-0 flex-1">
+                        <h2 className="text-base font-semibold text-white truncate leading-tight">
+                            {title}
+                            {folderPath && (
+                                <span className="text-xs font-normal text-gray-400 ml-2">
+                                    {folderPath}
+                                </span>
+                            )}
+                        </h2>
                     </div>
                     {subtitle && (
-                        <span className="text-xs text-gray-400">{subtitle}</span>
+                        <span className="text-xs text-gray-400 flex-shrink-0 ml-2">{subtitle}</span>
                     )}
                 </div>
             </div>
