@@ -50,7 +50,7 @@ export function FolderColumn({
             </div>
 
             {/* Content */}
-            <div className="p-1.5 max-h-96 overflow-y-auto">
+            <div className="p-1.5">
                 {bookmarks.length === 0 ? (
                     <div className="text-center py-4 text-gray-400">
                         <Folder className="w-5 h-5 mx-auto mb-1.5 opacity-50" />

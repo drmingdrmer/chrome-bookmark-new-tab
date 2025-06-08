@@ -302,7 +302,7 @@ export function App() {
 
         return (
             <div className="grid gap-3" style={{
-                gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                gridTemplateColumns: 'repeat(auto-fill, 300px)',
                 justifyContent: 'start'
             }}>
                 {columns}
