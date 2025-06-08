@@ -72,7 +72,7 @@ export function BookmarkItem({
         <div
             ref={setNodeRef}
             style={style}
-            className={`group relative flex items-start ${isSearchMode ? 'space-x-0' : 'space-x-1'} p-1 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-200 border border-transparent hover:border-white/10 ${isDragging ? 'opacity-50 z-50' : ''
+            className={`group relative flex items-start ${isSearchMode ? 'space-x-0' : 'space-x-1'} p-1 rounded-lg transition-all duration-200 border border-transparent hover:border-white/10 ${isDragging ? 'opacity-50 z-50' : ''
                 }`}
         >
             {/* Drag Handle - 只在非搜索模式下显示 */}
@@ -97,7 +97,7 @@ export function BookmarkItem({
                 >
                     <div className="mb-0.5">
                         <h3
-                            className="text-sm font-medium text-gray-200 truncate leading-tight"
+                            className="text-sm font-medium text-gray-300 truncate leading-tight px-1.5 py-0.5 rounded"
                             dangerouslySetInnerHTML={{ __html: getHighlightedTitle() }}
                         />
                         {/* Debug Info */}

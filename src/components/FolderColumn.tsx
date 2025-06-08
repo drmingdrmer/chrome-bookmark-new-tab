@@ -59,11 +59,11 @@ export function FolderColumn({
     return (
         <div
             ref={setNodeRef}
-            className={`w-full rounded-xl border border-white/10 overflow-hidden transition-all duration-200 ${isOver ? 'ring-2 ring-blue-400/50 border-blue-400/50' : ''
+            className={`w-full h-full rounded-xl border border-white/10 overflow-hidden transition-all duration-200 flex flex-col ${isOver ? 'ring-2 ring-blue-400/50 border-blue-400/50' : ''
                 }`}
         >
             {/* Header */}
-            <div className="px-3 py-1.5 bg-black/20">
+            <div className="px-3 py-1.5 bg-black/20 backdrop-blur-sm">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-1.5">
                         <Folder className="w-4 h-4 text-blue-300" />
@@ -82,7 +82,7 @@ export function FolderColumn({
             ></div>
 
             {/* Content */}
-            <div className="p-1.5 bg-black/60 backdrop-blur-sm">
+            <div className="p-1.5 bg-black/50 backdrop-blur-sm flex-1">
                 {bookmarks.length === 0 ? (
                     <div className="text-center py-4 text-gray-400">
                         <Folder className="w-5 h-5 mx-auto mb-1.5 opacity-50" />

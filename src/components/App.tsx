@@ -356,6 +356,7 @@ export function App() {
                         onClick={toggleSettings}
                         className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
                         aria-label="Settings"
+                        tabIndex={-1}
                     >
                         <Settings className="w-5 h-5" />
                     </button>
@@ -369,7 +370,7 @@ export function App() {
                 </header>
 
                 {/* Main Content */}
-                <main id="bookmarks-container" className="max-w-none mx-auto px-4 pb-4">
+                <main id="bookmarks-container" className="max-w-none mx-auto pl-4 pr-0 pb-4">
                     {searchTerm ? renderSearchResults() : renderBookmarkFolders()}
                 </main>
 
