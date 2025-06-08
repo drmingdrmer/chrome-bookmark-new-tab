@@ -21,6 +21,9 @@ export function BookmarkItem({
     onDelete,
     showUrl = true
 }: BookmarkItemProps) {
+    // 搜索模式下禁用拖拽功能
+    const isSearchMode = !!searchTerm;
+
     const {
         attributes,
         listeners,
@@ -28,7 +31,10 @@ export function BookmarkItem({
         transform,
         transition,
         isDragging,
-    } = useSortable({ id: bookmark.id });
+    } = useSortable({
+        id: bookmark.id,
+        disabled: isSearchMode  // 搜索模式下禁用拖拽
+    });
 
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -66,17 +72,19 @@ export function BookmarkItem({
         <div
             ref={setNodeRef}
             style={style}
-            className={`group relative flex items-start space-x-1 p-1 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-200 border border-transparent hover:border-white/10 ${isDragging ? 'opacity-50 z-50' : ''
+            className={`group relative flex items-start ${isSearchMode ? 'space-x-0' : 'space-x-1'} p-1 rounded-lg bg-white/5 hover:bg-white/10 transition-all duration-200 border border-transparent hover:border-white/10 ${isDragging ? 'opacity-50 z-50' : ''
                 }`}
         >
-            {/* Drag Handle */}
-            <div
-                {...attributes}
-                {...listeners}
-                className="drag-handle opacity-0 group-hover:opacity-50 hover:opacity-100 transition-opacity duration-200 mt-0.5 cursor-grab active:cursor-grabbing"
-            >
-                <GripVertical className="w-3 h-3 text-gray-400" />
-            </div>
+            {/* Drag Handle - 只在非搜索模式下显示 */}
+            {!isSearchMode && (
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="drag-handle opacity-0 group-hover:opacity-50 hover:opacity-100 transition-opacity duration-200 mt-0.5 cursor-grab active:cursor-grabbing"
+                >
+                    <GripVertical className="w-3 h-3 text-gray-400" />
+                </div>
+            )}
 
             {/* Bookmark Content */}
             <div className="flex-1 min-w-0">
@@ -118,6 +126,7 @@ export function BookmarkItem({
                 onClick={handleDelete}
                 className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-0.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded"
                 aria-label={`Delete ${bookmark.title}`}
+                tabIndex={isSearchMode ? -1 : 0}  // 搜索模式下不可通过Tab访问
             >
                 <Trash2 className="w-3 h-3" />
             </button>
