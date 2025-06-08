@@ -86,8 +86,8 @@ export function BookmarkItem({
                 </div>
             )}
 
-            {/* Bookmark Content */}
-            <div className="flex-1 min-w-0">
+            {/* Bookmark Content - 现在占据全部可用空间 */}
+            <div className="flex-1 min-w-0 relative">
                 <a
                     href={bookmark.url}
                     className="block group-hover:text-blue-300 transition-colors duration-200"
@@ -119,17 +119,17 @@ export function BookmarkItem({
                         </p>
                     )}
                 </a>
-            </div>
 
-            {/* Delete Button */}
-            <button
-                onClick={handleDelete}
-                className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-0.5 text-gray-400 hover:text-red-400 hover:bg-red-500/10 rounded"
-                aria-label={`Delete ${bookmark.title}`}
-                tabIndex={isSearchMode ? -1 : 0}  // 搜索模式下不可通过Tab访问
-            >
-                <Trash2 className="w-3 h-3" />
-            </button>
+                {/* Delete Button - 绝对定位在右上角，浮动在内容上方 */}
+                <button
+                    onClick={handleDelete}
+                    className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-all duration-200 p-1 text-white bg-black/60 hover:text-white hover:bg-red-500/80 rounded backdrop-blur-sm z-10 border border-white/20"
+                    aria-label={`Delete ${bookmark.title}`}
+                    tabIndex={isSearchMode ? -1 : 0}  // 搜索模式下不可通过Tab访问
+                >
+                    <Trash2 className="w-3 h-3" />
+                </button>
+            </div>
         </div>
     );
 } 
