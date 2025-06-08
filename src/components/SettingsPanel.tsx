@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Settings, X, Save, Brain, TestTube } from 'lucide-react';
 import { Config } from '@/types/bookmark';
 import { useAI } from '@/hooks/useAI';
@@ -20,6 +20,7 @@ export function SettingsPanel({
 }: SettingsPanelProps) {
     const [maxEntries, setMaxEntries] = useState(config.maxEntriesPerColumn);
     const [showDebugInfo, setShowDebugInfo] = useState(config.showDebugInfo);
+    const [isInitialized, setIsInitialized] = useState(false);
 
     // AI相关状态
     const [aiApiUrl, setAiApiUrl] = useState(config.aiApiUrl || '');
@@ -32,14 +33,20 @@ export function SettingsPanel({
 
     const { saveConfig, testConnection, isConfigValid, error, clearError } = useAI();
 
-    // 当配置变化时更新状态
+    // 只在面板打开时初始化表单状态
     useEffect(() => {
-        setMaxEntries(config.maxEntriesPerColumn);
-        setShowDebugInfo(config.showDebugInfo);
-        setAiApiUrl(config.aiApiUrl || '');
-        setAiApiKey(config.aiApiKey || '');
-        setAiModel(config.aiModel || '');
-    }, [config]);
+        if (isOpen && !isInitialized) {
+            setMaxEntries(config.maxEntriesPerColumn);
+            setShowDebugInfo(config.showDebugInfo);
+            setAiApiUrl(config.aiApiUrl || '');
+            setAiApiKey(config.aiApiKey || '');
+            setAiModel(config.aiModel || '');
+            setIsInitialized(true);
+        } else if (!isOpen) {
+            // 面板关闭时重置初始化状态，为下次打开做准备
+            setIsInitialized(false);
+        }
+    }, [isOpen, config, isInitialized]); // 监听面板打开状态和配置变化
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -47,11 +54,11 @@ export function SettingsPanel({
         clearError();
 
         try {
-            // 保存基本设置
-            onUpdateMaxEntries(maxEntries);
-            onUpdateShowDebugInfo(showDebugInfo);
+            // 先保存基本设置，等待完成
+            await onUpdateMaxEntries(maxEntries);
+            await onUpdateShowDebugInfo(showDebugInfo);
 
-            // 保存AI配置
+            // 然后保存AI配置
             if (aiApiUrl || aiApiKey || aiModel) {
                 await saveConfig({
                     apiUrl: aiApiUrl,

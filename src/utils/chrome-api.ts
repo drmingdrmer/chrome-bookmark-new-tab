@@ -62,6 +62,7 @@ export async function moveBookmark(
 export async function getStorageData<T>(key: string): Promise<T | null> {
     return new Promise((resolve) => {
         chrome.storage.local.get([key], (result) => {
+            console.log('📖 Getting storage data for key:', key, 'result:', result);
             resolve(result[key] || null);
         });
     });
@@ -71,9 +72,16 @@ export async function getStorageData<T>(key: string): Promise<T | null> {
  * Set storage data using Chrome storage API
  */
 export async function setStorageData<T>(key: string, value: T): Promise<void> {
-    return new Promise((resolve) => {
+    return new Promise((resolve, reject) => {
+        console.log('💾 Setting storage data:', key, value);
         chrome.storage.local.set({ [key]: value }, () => {
-            resolve();
+            if (chrome.runtime.lastError) {
+                console.error('💾 Storage set error:', chrome.runtime.lastError);
+                reject(chrome.runtime.lastError);
+            } else {
+                console.log('💾 Storage set successful');
+                resolve();
+            }
         });
     });
 } 
