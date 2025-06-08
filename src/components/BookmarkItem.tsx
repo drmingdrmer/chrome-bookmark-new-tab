@@ -102,19 +102,76 @@ export function BookmarkItem({
         return searchTerm ? highlightSearchTerm(cleanUrl, searchTerm) : cleanUrl;
     };
 
-    // 获取评分星级
+    // 获取评分星级 (适配1-10分制)
     const getStarRating = (score: number) => {
-        const fullStars = Math.floor(score / 20); // 100分满分，每20分一颗星
-        const halfStar = (score % 20) >= 10; // 10分以上显示半星
+        const fullStars = Math.floor(score / 2); // 10分满分，每2分一颗星
+        const halfStar = (score % 2) >= 1; // 1分以上显示半星
         return { fullStars, halfStar };
     };
 
-    // 获取评分颜色
+    // 获取评分颜色 (纯黄色到灰色的渐变)
     const getRatingColor = (score: number) => {
-        if (score >= 80) return 'text-green-400';
-        if (score >= 60) return 'text-yellow-400';
-        if (score >= 40) return 'text-orange-400';
-        return 'text-red-400';
+        if (score >= 9) return 'text-yellow-400';     // 9-10分：亮黄色
+        if (score >= 8) return 'text-yellow-500';     // 8分：纯黄色
+        if (score >= 7) return 'text-yellow-600';     // 7分：深黄色
+        if (score >= 6) return 'text-yellow-700';     // 6分：更深黄色
+        if (score >= 5) return 'text-gray-400';       // 5分：浅灰色
+        if (score >= 4) return 'text-gray-500';       // 4分：中等灰色
+        if (score >= 3) return 'text-gray-600';       // 3分：深灰色
+        return 'text-gray-700';                       // 1-2分：最深灰色
+    };
+
+    // 获取基于分值的完整视觉样式 (适配1-10分制)
+    const getScoreVisualStyle = (score: number) => {
+        if (score >= 9) {
+            return {
+                bgColor: 'bg-yellow-500/10',
+                borderColor: 'border-yellow-400/30',
+                glowEffect: 'shadow-yellow-400/20 shadow-lg',
+                badge: '⭐',
+                level: '优秀'
+            };
+        } else if (score >= 8) {
+            return {
+                bgColor: 'bg-yellow-500/8',
+                borderColor: 'border-yellow-400/25',
+                glowEffect: 'shadow-yellow-400/15 shadow-md',
+                badge: '✨',
+                level: '良好'
+            };
+        } else if (score >= 7) {
+            return {
+                bgColor: 'bg-yellow-500/5',
+                borderColor: 'border-yellow-400/20',
+                glowEffect: 'shadow-yellow-400/10 shadow-md',
+                badge: '💫',
+                level: '中等'
+            };
+        } else if (score >= 6) {
+            return {
+                bgColor: 'bg-yellow-500/3',
+                borderColor: 'border-yellow-400/15',
+                glowEffect: 'shadow-yellow-400/5 shadow-sm',
+                badge: '⚡',
+                level: '一般'
+            };
+        } else if (score >= 4) {
+            return {
+                bgColor: 'bg-gray-500/3',
+                borderColor: 'border-gray-400/15',
+                glowEffect: '',
+                badge: '⚠️',
+                level: '偏低'
+            };
+        } else {
+            return {
+                bgColor: 'bg-gray-500/3',
+                borderColor: 'border-gray-400/15',
+                glowEffect: '',
+                badge: '📉',
+                level: '较低'
+            };
+        }
     };
 
     // 获取维度的视觉样式
@@ -128,9 +185,9 @@ export function BookmarkItem({
                 label: '工作'
             },
             learn: {
-                bgColor: 'bg-green-500/10',
-                borderColor: 'border-green-400/30',
-                textColor: 'text-green-400',
+                bgColor: 'bg-red-500/10',
+                borderColor: 'border-red-400/30',
+                textColor: 'text-red-400',
                 icon: '📚',
                 label: '学习'
             },
@@ -159,12 +216,17 @@ export function BookmarkItem({
         return styles[dimension as keyof typeof styles] || styles.other;
     };
 
+    // 获取基于评分的视觉样式
+    const scoreVisualStyle = rating ? getScoreVisualStyle(rating.score) : null;
+
     return (
         <div
             ref={setNodeRef}
             style={style}
-            className={`group relative flex items-start ${isSearchMode ? 'space-x-0' : 'space-x-1'} p-1 rounded-lg border border-transparent hover:border-white/10 ${isDragging ? 'opacity-50 z-50' : ''
-                }`}
+            className={`group relative flex items-start ${isSearchMode ? 'space-x-0' : 'space-x-1'} p-1 rounded-lg border ${scoreVisualStyle
+                ? `${scoreVisualStyle.borderColor} ${scoreVisualStyle.bgColor} ${scoreVisualStyle.glowEffect}`
+                : 'border-transparent hover:border-white/10'
+                } ${isDragging ? 'opacity-50 z-50' : ''}`}
         >
             {/* Drag Handle - 只在非搜索模式下显示 */}
             {!isSearchMode && (
@@ -194,7 +256,7 @@ export function BookmarkItem({
                             />
 
                             {/* AI评分显示 */}
-                            {rating && (
+                            {rating && scoreVisualStyle && (
                                 <div className="flex items-center space-x-1 ml-2 flex-shrink-0">
                                     {/* 星级显示 */}
                                     <div className="flex items-center">
