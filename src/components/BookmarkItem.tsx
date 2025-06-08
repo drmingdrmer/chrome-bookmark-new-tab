@@ -111,10 +111,10 @@ export function BookmarkItem({
 
     // 获取评分颜色 (纯黄色到灰色的渐变)
     const getRatingColor = (score: number) => {
-        if (score >= 9) return 'text-yellow-400';     // 9-10分：亮黄色
-        if (score >= 8) return 'text-yellow-500';     // 8分：纯黄色
-        if (score >= 7) return 'text-yellow-600';     // 7分：深黄色
-        if (score >= 6) return 'text-yellow-700';     // 6分：更深黄色
+        if (score >= 9) return 'text-yellow-600';     // 9-10分：暗黄色
+        if (score >= 8) return 'text-yellow-700';     // 8分：纯黄色
+        if (score >= 7) return 'text-yellow-800';     // 7分：深黄色
+        if (score >= 6) return 'text-yellow-900';     // 6分：更深黄色
         if (score >= 5) return 'text-gray-400';       // 5分：浅灰色
         if (score >= 4) return 'text-gray-500';       // 4分：中等灰色
         if (score >= 3) return 'text-gray-600';       // 3分：深灰色
