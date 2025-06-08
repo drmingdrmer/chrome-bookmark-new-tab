@@ -125,48 +125,42 @@ export function BookmarkItem({
     const getScoreVisualStyle = (score: number) => {
         if (score >= 9) {
             return {
-                bgColor: 'bg-yellow-500/10',
-                borderColor: 'border-yellow-400/30',
-                glowEffect: 'shadow-yellow-400/20 shadow-lg',
+                bgColor: '',
+                glowEffect: '',
                 badge: '⭐',
                 level: '优秀'
             };
         } else if (score >= 8) {
             return {
-                bgColor: 'bg-yellow-500/8',
-                borderColor: 'border-yellow-400/25',
-                glowEffect: 'shadow-yellow-400/15 shadow-md',
+                bgColor: '',
+                glowEffect: '',
                 badge: '✨',
                 level: '良好'
             };
         } else if (score >= 7) {
             return {
-                bgColor: 'bg-yellow-500/5',
-                borderColor: 'border-yellow-400/20',
-                glowEffect: 'shadow-yellow-400/10 shadow-md',
+                bgColor: '',
+                glowEffect: '',
                 badge: '💫',
                 level: '中等'
             };
         } else if (score >= 6) {
             return {
-                bgColor: 'bg-yellow-500/3',
-                borderColor: 'border-yellow-400/15',
-                glowEffect: 'shadow-yellow-400/5 shadow-sm',
+                bgColor: '',
+                glowEffect: '',
                 badge: '⚡',
                 level: '一般'
             };
         } else if (score >= 4) {
             return {
-                bgColor: 'bg-gray-500/3',
-                borderColor: 'border-gray-400/15',
+                bgColor: '',
                 glowEffect: '',
                 badge: '⚠️',
                 level: '偏低'
             };
         } else {
             return {
-                bgColor: 'bg-gray-500/3',
-                borderColor: 'border-gray-400/15',
+                bgColor: '',
                 glowEffect: '',
                 badge: '📉',
                 level: '较低'
@@ -185,9 +179,9 @@ export function BookmarkItem({
                 label: '工作'
             },
             learn: {
-                bgColor: 'bg-red-500/10',
-                borderColor: 'border-red-400/30',
-                textColor: 'text-red-400',
+                bgColor: 'bg-green-500/10',
+                borderColor: 'border-green-400/30',
+                textColor: 'text-green-400',
                 icon: '📚',
                 label: '学习'
             },
@@ -199,9 +193,9 @@ export function BookmarkItem({
                 label: '娱乐'
             },
             tool: {
-                bgColor: 'bg-yellow-500/10',
-                borderColor: 'border-yellow-400/30',
-                textColor: 'text-yellow-400',
+                bgColor: 'bg-slate-600/10',
+                borderColor: 'border-slate-500/30',
+                textColor: 'text-slate-400',
                 icon: '🔧',
                 label: '工具'
             },
@@ -223,10 +217,7 @@ export function BookmarkItem({
         <div
             ref={setNodeRef}
             style={style}
-            className={`group relative flex items-start ${isSearchMode ? 'space-x-0' : 'space-x-1'} p-1 rounded-lg border ${scoreVisualStyle
-                ? `${scoreVisualStyle.borderColor} ${scoreVisualStyle.bgColor} ${scoreVisualStyle.glowEffect}`
-                : 'border-transparent hover:border-white/10'
-                } ${isDragging ? 'opacity-50 z-50' : ''}`}
+            className={`group relative flex items-start ${isSearchMode ? 'space-x-0' : 'space-x-1'} p-1 rounded-lg border border-transparent hover:border-white/10 ${isDragging ? 'opacity-50 z-50' : ''}`}
         >
             {/* Drag Handle - 只在非搜索模式下显示 */}
             {!isSearchMode && (
