@@ -120,10 +120,10 @@ export function BookmarkItem({
                     )}
                 </a>
 
-                {/* Delete Button - 绝对定位在右上角，浮动在内容上方 */}
+                {/* Delete Button - 绝对定位在右下角，紧贴边界 */}
                 <button
                     onClick={handleDelete}
-                    className="absolute top-0 right-0 opacity-0 group-hover:opacity-100 transition-all duration-200 p-1 text-white bg-black/60 hover:text-white hover:bg-red-500/80 rounded backdrop-blur-sm z-10 border border-white/20"
+                    className="absolute -bottom-0.5 -right-0.5 opacity-0 group-hover:opacity-100 transition-all duration-200 p-1 text-white bg-black/60 hover:text-white hover:bg-red-500/80 rounded backdrop-blur-sm z-10 border border-white/20"
                     aria-label={`Delete ${bookmark.title}`}
                     tabIndex={isSearchMode ? -1 : 0}  // 搜索模式下不可通过Tab访问
                 >
