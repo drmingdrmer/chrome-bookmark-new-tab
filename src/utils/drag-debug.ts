@@ -1,112 +1,166 @@
-// 拖拽调试工具
-export function debugDragAndDrop() {
-    console.log('🔍 开始拖拽功能诊断...');
+// 拖拽功能调试工具 - @dnd-kit版本
 
-    // 1. 检查是否有可拖拽元素
-    const allDraggableElements = document.querySelectorAll('[draggable="true"]');
-    console.log(`📊 找到 ${allDraggableElements.length} 个draggable="true"元素`);
-
-    // 过滤出真正的书签项（排除拖拽手柄等）
-    const bookmarkElements = Array.from(allDraggableElements).filter(el => {
-        return el.className.includes('group relative flex items-start');
-    });
-
-    console.log(`📚 其中 ${bookmarkElements.length} 个是书签项`);
-
-    if (bookmarkElements.length === 0) {
-        console.error('❌ 没有找到可拖拽的书签元素！');
-        return;
-    }
-
-    // 2. 检查第一个书签元素
-    const firstElement = bookmarkElements[0] as HTMLElement;
-    console.log('🎯 第一个书签元素:', {
-        tagName: firstElement.tagName,
-        className: firstElement.className.substring(0, 50) + '...',
-        draggable: firstElement.draggable,
-        hasChildren: firstElement.children.length
-    });
-
-    // 3. 检查事件监听器（使用真实的拖拽事件）
-    console.log('📋 检查拖拽事件处理器...');
-
-    // 创建一个带有dataTransfer的拖拽事件
-    let dragStartFired = false;
-    const tempHandler = (e: DragEvent) => {
-        dragStartFired = true;
-        console.log('  ✅ dragstart事件触发了！');
-        console.log('  - dataTransfer存在:', !!e.dataTransfer);
-    };
-
-    firstElement.addEventListener('dragstart', tempHandler, { once: true });
-
-    // 尝试使用真实的DragEvent
-    try {
-        const dragStartEvent = new DragEvent('dragstart', {
-            bubbles: true,
-            cancelable: true
-        });
-
-        // 手动触发
-        firstElement.dispatchEvent(dragStartEvent);
-
-        if (!dragStartFired) {
-            console.log('  ⚠️ dragstart事件未被触发');
-        }
-    } catch (error) {
-        console.error('  ❌ 创建DragEvent失败:', error);
-    }
-
-    firstElement.removeEventListener('dragstart', tempHandler);
-
-    // 4. 检查内部链接元素
-    const links = firstElement.querySelectorAll('a');
-    if (links.length > 0) {
-        console.log(`⚠️ 找到 ${links.length} 个链接元素:`);
-        links.forEach((link, index) => {
-            const linkDraggable = link.getAttribute('draggable');
-            console.log(`  - 链接 ${index + 1}: draggable="${linkDraggable}", href="${link.href.substring(0, 50)}..."`);
-        });
-    }
-
-    // 5. 检查拖拽手柄
-    const dragHandles = firstElement.querySelectorAll('.drag-handle');
-    if (dragHandles.length > 0) {
-        console.log(`🔧 找到 ${dragHandles.length} 个拖拽手柄`);
-        dragHandles.forEach((handle, index) => {
-            const handleDraggable = handle.getAttribute('draggable');
-            console.log(`  - 手柄 ${index + 1}: draggable="${handleDraggable}"`);
-        });
-    }
-
-    // 6. 检查CSS
-    const computedStyle = window.getComputedStyle(firstElement);
-    console.log('🎨 元素样式:', {
-        cursor: computedStyle.cursor,
-        userSelect: computedStyle.userSelect,
-        pointerEvents: computedStyle.pointerEvents,
-        position: computedStyle.position
-    });
-
-    // 7. 检查React Props
-    console.log('⚛️ 检查React属性...');
-    const reactKey = Object.keys(firstElement).find(key => key.startsWith('__react'));
-    if (reactKey) {
-        console.log('  ✅ 找到React fiber');
-    } else {
-        console.log('  ⚠️ 未找到React fiber（可能是生产构建）');
-    }
-
-    console.log('\n📝 建议：');
-    console.log('1. 确保拖拽整个书签项，而不是拖拽手柄');
-    console.log('2. 检查控制台是否有"🚀 拖拽开始"日志');
-    console.log('3. 确保Chrome扩展有bookmarks权限');
-    console.log('4. 尝试在不同的书签之间拖拽');
-
-    console.log('\n✅ 拖拽诊断完成');
+interface DragDebugResult {
+    totalElements: number;
+    bookmarkItems: number;
+    folderColumns: number;
+    sortableContexts: number;
+    dndContexts: number;
+    errors: string[];
+    recommendations: string[];
 }
 
-// 将函数添加到全局对象，方便在控制台调用
+export function debugDragAndDrop(): DragDebugResult {
+    const result: DragDebugResult = {
+        totalElements: 0,
+        bookmarkItems: 0,
+        folderColumns: 0,
+        sortableContexts: 0,
+        dndContexts: 0,
+        errors: [],
+        recommendations: []
+    };
+
+    try {
+        console.log('🔍 开始调试 @dnd-kit 拖拽功能...');
+
+        // 检查 DnD Context (查找包含 dnd-kit 的元素)
+        const dndWrappers = document.querySelectorAll('[data-dnd-wrapper], [data-dndkit-scrollable-container]');
+        const rootElements = document.querySelectorAll('body > div');
+        result.dndContexts = dndWrappers.length > 0 ? dndWrappers.length : rootElements.length;
+        console.log(`📱 找到 ${result.dndContexts} 个可能的 DndContext 容器`);
+
+        // 检查书签项目
+        const bookmarkItems = document.querySelectorAll('.group.relative.flex.items-start');
+        result.bookmarkItems = bookmarkItems.length;
+        console.log(`📚 找到 ${result.bookmarkItems} 个书签项目`);
+
+        // 检查文件夹列
+        const folderColumns = document.querySelectorAll('.flex-shrink-0.w-80.rounded-xl');
+        result.folderColumns = folderColumns.length;
+        console.log(`📁 找到 ${result.folderColumns} 个文件夹列`);
+
+        // 检查拖拽手柄
+        const dragHandles = document.querySelectorAll('.drag-handle');
+        console.log(`🤏 找到 ${dragHandles.length} 个拖拽手柄`);
+
+        // 验证 @dnd-kit 特有属性
+        const sortableElements = document.querySelectorAll('[data-sortable-item]');
+        const droppableElements = document.querySelectorAll('[data-droppable]');
+        console.log(`🔢 找到 ${sortableElements.length} 个可排序元素`);
+        console.log(`📍 找到 ${droppableElements.length} 个可放置元素`);
+
+        result.totalElements = bookmarkItems.length + folderColumns.length + dragHandles.length;
+
+        // 错误检查
+        if (result.bookmarkItems === 0) {
+            result.errors.push('未找到书签项目');
+        }
+
+        if (dragHandles.length === 0) {
+            result.errors.push('未找到拖拽手柄');
+        }
+
+        // 检查第一个书签项目的拖拽属性
+        if (bookmarkItems.length > 0) {
+            const firstItem = bookmarkItems[0] as HTMLElement;
+            const dragHandle = firstItem.querySelector('.drag-handle');
+
+            if (!dragHandle) {
+                result.errors.push('书签项目缺少拖拽手柄');
+            } else {
+                console.log('✅ 第一个书签项目有拖拽手柄');
+
+                // 检查拖拽手柄的事件监听器属性
+                const handleProps = Object.getOwnPropertyNames(dragHandle).filter(prop =>
+                    prop.includes('react') || prop.includes('event')
+                );
+                if (handleProps.length > 0) {
+                    console.log('✅ 拖拽手柄有事件属性');
+                }
+            }
+        }
+
+        // 检查是否有@dnd-kit相关的React组件
+        const reactElements = document.querySelectorAll('[data-reactroot], [data-react-helmet]');
+        if (reactElements.length > 0) {
+            console.log('⚛️ 检测到React应用');
+        }
+
+        // 建议
+        if (result.errors.length === 0) {
+            result.recommendations.push('✅ @dnd-kit 拖拽功能看起来配置正确');
+            result.recommendations.push('🎯 可以尝试拖拽书签测试功能');
+            result.recommendations.push('💡 使用鼠标拖拽手柄（三横线图标）来拖拽书签');
+        } else {
+            result.recommendations.push('🔧 需要检查 @dnd-kit 的配置');
+        }
+
+        // 输出详细信息
+        console.log('\n📊 调试结果汇总:');
+        console.log(`- DndContext 容器: ${result.dndContexts}`);
+        console.log(`- 书签项目: ${result.bookmarkItems}`);
+        console.log(`- 文件夹列: ${result.folderColumns}`);
+        console.log(`- 拖拽手柄: ${dragHandles.length}`);
+        console.log(`- 可排序元素: ${sortableElements.length}`);
+        console.log(`- 可放置元素: ${droppableElements.length}`);
+
+        if (result.errors.length > 0) {
+            console.log('\n❌ 发现的问题:');
+            result.errors.forEach(error => console.log(`  - ${error}`));
+        }
+
+        if (result.recommendations.length > 0) {
+            console.log('\n💡 建议:');
+            result.recommendations.forEach(rec => console.log(`  - ${rec}`));
+        }
+
+        // 测试拖拽手柄交互
+        if (dragHandles.length > 0) {
+            console.log('\n🎮 测试拖拽手柄交互:');
+            const firstHandle = dragHandles[0] as HTMLElement;
+
+            // 模拟鼠标悬停
+            const parentElement = firstHandle.closest('.group');
+            if (parentElement) {
+                parentElement.dispatchEvent(new MouseEvent('mouseenter', { bubbles: true }));
+
+                const handleStyle = window.getComputedStyle(firstHandle);
+                console.log(`  - 手柄可见性: ${handleStyle.opacity}`);
+                console.log(`  - 鼠标样式: ${handleStyle.cursor}`);
+
+                // 检查是否有opacity变化
+                if (handleStyle.opacity !== '0') {
+                    console.log('  ✅ 拖拽手柄在悬停时可见');
+                } else {
+                    console.log('  ⚠️ 拖拽手柄在悬停时可能不可见');
+                }
+            }
+        }
+
+        // 额外的调试信息
+        console.log('\n🔧 调试提示:');
+        console.log('1. 尝试拖拽书签项目左侧的三横线图标');
+        console.log('2. 检查控制台是否有"🚀 开始拖拽"相关日志');
+        console.log('3. 确保 Chrome 扩展有 bookmarks 权限');
+        console.log('4. 如果拖拽不工作，请检查网络控制台的错误信息');
+
+        return result;
+
+    } catch (error) {
+        console.error('❌ 调试过程中出错:', error);
+        result.errors.push(`调试工具错误: ${error}`);
+        return result;
+    }
+}
+
+// 全局暴露调试函数
+declare global {
+    interface Window {
+        debugDragAndDrop: () => DragDebugResult;
+    }
+}
+
 if (typeof window !== 'undefined') {
-    (window as any).debugDragAndDrop = debugDragAndDrop;
+    window.debugDragAndDrop = debugDragAndDrop;
 } 

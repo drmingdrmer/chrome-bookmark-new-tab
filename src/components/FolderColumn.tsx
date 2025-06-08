@@ -1,5 +1,7 @@
 import React from 'react';
 import { Folder } from 'lucide-react';
+import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
+import { useDroppable } from '@dnd-kit/core';
 import { Bookmark } from '@/types/bookmark';
 import { BookmarkItem } from './BookmarkItem';
 import { getFolderColor } from '@/utils/bookmark-helpers';
@@ -10,8 +12,6 @@ interface FolderColumnProps {
     folderId?: string;
     bookmarks: Bookmark[];
     onDeleteBookmark: (bookmarkId: string) => void;
-    onMoveBookmark?: (bookmarkId: string, targetFolderId: string, newIndex: number) => void;
-    allBookmarks?: Record<string, Bookmark>;
 }
 
 export function FolderColumn({
@@ -19,49 +19,22 @@ export function FolderColumn({
     subtitle,
     folderId,
     bookmarks,
-    onDeleteBookmark,
-    onMoveBookmark,
-    allBookmarks = {}
+    onDeleteBookmark
 }: FolderColumnProps) {
     const backgroundColor = folderId ? getFolderColor(folderId) : 'rgba(255, 255, 255, 0.05)';
 
-    const handleDragOver = (e: React.DragEvent) => {
-        e.preventDefault();
-        e.dataTransfer.dropEffect = 'move';
-    };
+    const { setNodeRef, isOver } = useDroppable({
+        id: folderId || 'root',
+    });
 
-    const handleDrop = (e: React.DragEvent) => {
-        e.preventDefault();
-        console.log('📁 拖拽到文件夹:', title);
-
-        if (!onMoveBookmark) {
-            console.log('❌ 文件夹没有移动处理器');
-            return;
-        }
-
-        try {
-            const draggedId = e.dataTransfer.getData('text/plain');
-            if (!draggedId) {
-                console.log('❌ 文件夹没有拖拽数据');
-                return;
-            }
-
-            // Move to the end of this folder
-            const newIndex = bookmarks.length;
-
-            console.log(`🎯 移动书签 ${draggedId} 到文件夹 ${folderId} 位置 ${newIndex}`);
-            onMoveBookmark(draggedId, folderId || '', newIndex);
-        } catch (error) {
-            console.error('Error handling folder drop:', error);
-        }
-    };
+    const bookmarkIds = bookmarks.map(bookmark => bookmark.id);
 
     return (
         <div
-            className="flex-shrink-0 w-80 rounded-xl border border-white/10 overflow-hidden"
+            ref={setNodeRef}
+            className={`flex-shrink-0 w-80 rounded-xl border border-white/10 overflow-hidden transition-all duration-200 ${isOver ? 'ring-2 ring-blue-400/50 border-blue-400/50' : ''
+                }`}
             style={{ backgroundColor }}
-            onDragOver={handleDragOver}
-            onDrop={handleDrop}
         >
             {/* Header */}
             <div className="px-3 py-1.5 border-b border-white/10 bg-black/20">
@@ -85,17 +58,16 @@ export function FolderColumn({
                     </div>
                 ) : (
                     <div className="space-y-1">
-                        {bookmarks.map((bookmark, index) => (
-                            <BookmarkItem
-                                key={bookmark.id}
-                                bookmark={bookmark}
-                                onDelete={onDeleteBookmark}
-                                onMove={onMoveBookmark}
-                                showUrl={true}
-                                index={index}
-                                allBookmarks={allBookmarks}
-                            />
-                        ))}
+                        <SortableContext items={bookmarkIds} strategy={verticalListSortingStrategy}>
+                            {bookmarks.map((bookmark) => (
+                                <BookmarkItem
+                                    key={bookmark.id}
+                                    bookmark={bookmark}
+                                    onDelete={onDeleteBookmark}
+                                    showUrl={true}
+                                />
+                            ))}
+                        </SortableContext>
                     </div>
                 )}
             </div>

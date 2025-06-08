@@ -1,5 +1,17 @@
 import React from 'react';
 import { Settings, AlertCircle, Loader2 } from 'lucide-react';
+import {
+    DndContext,
+    DragEndEvent,
+    DragOverEvent,
+    DragOverlay,
+    DragStartEvent,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+} from '@dnd-kit/core';
+import { arrayMove } from '@dnd-kit/sortable';
 import { SearchBox } from './SearchBox';
 import { BookmarkItem } from './BookmarkItem';
 import { FolderColumn } from './FolderColumn';
@@ -7,6 +19,7 @@ import { SettingsPanel } from './SettingsPanel';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useSettings } from '@/hooks/useSettings';
 import { chunkArray, countItemsInFolder } from '@/utils/bookmark-helpers';
+import { Bookmark } from '@/types/bookmark';
 
 export function App() {
     const {
@@ -32,8 +45,151 @@ export function App() {
         updateMaxEntries,
     } = useSettings();
 
+    const [activeBookmark, setActiveBookmark] = React.useState<Bookmark | null>(null);
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        })
+    );
+
     const isLoading = bookmarksLoading || settingsLoading;
     const error = bookmarksError || settingsError;
+
+    function handleDragStart(event: DragStartEvent) {
+        const { active } = event;
+        const bookmark = allBookmarks[active.id as string];
+        if (bookmark) {
+            setActiveBookmark(bookmark);
+            console.log('🚀 开始拖拽:', bookmark.title);
+        }
+    }
+
+    function handleDragOver(event: DragOverEvent) {
+        const { active, over } = event;
+        if (!over) return;
+
+        console.log('📍 拖拽经过:', over.id);
+    }
+
+    function handleDragEnd(event: DragEndEvent) {
+        const { active, over } = event;
+        setActiveBookmark(null);
+
+        if (!over || active.id === over.id) {
+            console.log('🏁 拖拽取消或位置未改变');
+            return;
+        }
+
+        const activeBookmark = allBookmarks[active.id as string];
+        const overItem = allBookmarks[over.id as string];
+
+        if (!activeBookmark) {
+            console.log('❌ 未找到拖拽的书签');
+            return;
+        }
+
+        console.log('📦 拖拽结束:', activeBookmark.title, '到', over.id);
+
+        // 情况1: 拖拽到文件夹上
+        if (overItem?.isFolder) {
+            const targetFolderId = overItem.id;
+            const targetFolderBookmarks = Object.values(allBookmarks)
+                .filter(b => b.parentId === targetFolderId && !b.isFolder)
+                .sort((a, b) => (a.index || 0) - (b.index || 0));
+            const newIndex = targetFolderBookmarks.length;
+
+            console.log(`🎯 移动书签 ${activeBookmark.id} 到文件夹 ${targetFolderId} 位置 ${newIndex}`);
+            moveBookmark(activeBookmark.id, targetFolderId, newIndex);
+            return;
+        }
+
+        // 情况2: 拖拽到文件夹列容器上（over.id是文件夹ID字符串，但不在allBookmarks中）
+        if (typeof over.id === 'string' && !overItem) {
+            // 检查over.id是否是一个有效的文件夹ID
+            const folderId = over.id;
+
+            // 如果是'root'或者确实是文件夹ID，则移动到该文件夹
+            if (folderId === 'root' || folderId.startsWith('direct-')) {
+                const targetFolderId = folderId === 'root' ? '' : '';
+                const targetFolderBookmarks = Object.values(allBookmarks)
+                    .filter(b => b.parentId === targetFolderId && !b.isFolder)
+                    .sort((a, b) => (a.index || 0) - (b.index || 0));
+                const newIndex = targetFolderBookmarks.length;
+
+                console.log(`🎯 移动书签 ${activeBookmark.id} 到根目录 位置 ${newIndex}`);
+                moveBookmark(activeBookmark.id, targetFolderId, newIndex);
+                return;
+            }
+
+            // 检查是否是有效的文件夹ID
+            const folderExists = Object.values(allBookmarks).some(b => b.isFolder && b.id === folderId);
+            if (folderExists) {
+                const targetFolderBookmarks = Object.values(allBookmarks)
+                    .filter(b => b.parentId === folderId && !b.isFolder)
+                    .sort((a, b) => (a.index || 0) - (b.index || 0));
+                const newIndex = targetFolderBookmarks.length;
+
+                console.log(`🎯 移动书签 ${activeBookmark.id} 到文件夹 ${folderId} 位置 ${newIndex}`);
+                moveBookmark(activeBookmark.id, folderId, newIndex);
+                return;
+            }
+
+            console.log('❌ 无法识别的拖拽目标:', over.id);
+            return;
+        }
+
+        // 情况3: 拖拽到另一个书签上，进行同文件夹内重排序
+        if (overItem && !overItem.isFolder &&
+            activeBookmark.parentId === overItem.parentId) {
+
+            const parentId = activeBookmark.parentId || '';
+
+            // 使用目标书签的index作为新位置
+            const targetIndex = overItem.index || 0;
+            const activeIndex = activeBookmark.index || 0;
+
+            // 如果拖拽到原位置，则不需要移动
+            if (targetIndex === activeIndex) {
+                console.log('🔄 位置没有变化，无需移动');
+                return;
+            }
+
+            // 计算新的索引位置
+            // 如果向后移动，新位置是目标位置+1；如果向前移动，新位置就是目标位置
+            const newIndex = activeIndex < targetIndex ? targetIndex + 1 : targetIndex;
+
+            console.log(`🔄 重排序: ${activeBookmark.title} 从位置 ${activeIndex} 到 ${newIndex}`);
+
+            // Case 3: 同文件夹内重新排序
+            console.log('📝 同文件夹内重新排序');
+
+            // Chrome API的index参数是最终位置，直接使用newIndex即可
+            // 之前的"减1"逻辑是错误的理解
+            console.log(`🎯 移动到目标位置: ${newIndex}`);
+
+            moveBookmark(activeBookmark.id, parentId, newIndex);
+            return;
+        }
+
+        // 情况4: 拖拽到不同文件夹的书签上，移动到该书签所在的文件夹
+        if (overItem && !overItem.isFolder &&
+            activeBookmark.parentId !== overItem.parentId) {
+
+            const targetFolderId = overItem.parentId || '';
+
+            // 使用目标书签的index作为插入位置（在其后插入）
+            const newIndex = (overItem.index || 0) + 1;
+
+            console.log(`🎯 移动书签 ${activeBookmark.id} 到文件夹 ${targetFolderId} 位置 ${newIndex}`);
+            moveBookmark(activeBookmark.id, targetFolderId, newIndex);
+            return;
+        }
+
+        console.log('❌ 未处理的拖拽情况:', { activeId: active.id, overId: over.id, overItem });
+    }
 
     // Render search results
     const renderSearchResults = () => {
@@ -56,17 +212,14 @@ export function App() {
                     </p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {searchResults.map(({ bookmark, folderPath }, index) => (
+                    {searchResults.map(({ bookmark, folderPath }) => (
                         <BookmarkItem
                             key={bookmark.id}
                             bookmark={bookmark}
                             searchTerm={searchTerm}
                             folderPath={folderPath}
                             onDelete={deleteBookmark}
-                            onMove={moveBookmark}
                             showUrl={true}
-                            index={index}
-                            allBookmarks={allBookmarks}
                         />
                     ))}
                 </div>
@@ -92,8 +245,6 @@ export function App() {
                         subtitle={subtitle}
                         bookmarks={chunk}
                         onDeleteBookmark={deleteBookmark}
-                        onMoveBookmark={moveBookmark}
-                        allBookmarks={allBookmarks}
                     />
                 );
             });
@@ -118,8 +269,6 @@ export function App() {
                         folderId={folder.id}
                         bookmarks={folderBookmarks}
                         onDeleteBookmark={deleteBookmark}
-                        onMoveBookmark={moveBookmark}
-                        allBookmarks={allBookmarks}
                     />
                 );
             } else {
@@ -135,8 +284,6 @@ export function App() {
                             folderId={folder.id}
                             bookmarks={chunk}
                             onDeleteBookmark={deleteBookmark}
-                            onMoveBookmark={moveBookmark}
-                            allBookmarks={allBookmarks}
                         />
                     );
                 });
@@ -184,39 +331,60 @@ export function App() {
     }
 
     return (
-        <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
-            {/* Header */}
-            <header className="relative p-4">
-                {/* Settings Button */}
-                <button
-                    id="settings-toggle"
-                    onClick={toggleSettings}
-                    className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
-                    aria-label="Settings"
-                >
-                    <Settings className="w-5 h-5" />
-                </button>
+        <DndContext
+            sensors={sensors}
+            collisionDetection={closestCenter}
+            onDragStart={handleDragStart}
+            onDragOver={handleDragOver}
+            onDragEnd={handleDragEnd}
+        >
+            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
+                {/* Header */}
+                <header className="relative p-4">
+                    {/* Settings Button */}
+                    <button
+                        id="settings-toggle"
+                        onClick={toggleSettings}
+                        className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg transition-all duration-200"
+                        aria-label="Settings"
+                    >
+                        <Settings className="w-5 h-5" />
+                    </button>
 
-                {/* Search Box */}
-                <SearchBox
-                    value={searchTerm}
-                    onSearch={searchBookmarks}
-                    onClear={clearSearch}
+                    {/* Search Box */}
+                    <SearchBox
+                        value={searchTerm}
+                        onSearch={searchBookmarks}
+                        onClear={clearSearch}
+                    />
+                </header>
+
+                {/* Main Content */}
+                <main id="bookmarks-container" className="px-4 pb-4">
+                    {searchTerm ? renderSearchResults() : renderBookmarkFolders()}
+                </main>
+
+                {/* Settings Panel */}
+                <SettingsPanel
+                    isOpen={isSettingsOpen}
+                    config={config}
+                    onClose={closeSettings}
+                    onUpdateMaxEntries={updateMaxEntries}
                 />
-            </header>
 
-            {/* Main Content */}
-            <main id="bookmarks-container" className="px-4 pb-4">
-                {searchTerm ? renderSearchResults() : renderBookmarkFolders()}
-            </main>
-
-            {/* Settings Panel */}
-            <SettingsPanel
-                isOpen={isSettingsOpen}
-                config={config}
-                onClose={closeSettings}
-                onUpdateMaxEntries={updateMaxEntries}
-            />
-        </div>
+                {/* Drag Overlay */}
+                <DragOverlay>
+                    {activeBookmark ? (
+                        <div className="bg-blue-500/20 backdrop-blur-sm border border-blue-400/50 rounded-lg p-2 rotate-3 scale-105">
+                            <BookmarkItem
+                                bookmark={activeBookmark}
+                                onDelete={() => { }}
+                                showUrl={false}
+                            />
+                        </div>
+                    ) : null}
+                </DragOverlay>
+            </div>
+        </DndContext>
     );
 } 

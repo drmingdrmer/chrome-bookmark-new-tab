@@ -80,10 +80,15 @@ export function useBookmarks() {
         try {
             await deleteBookmarkAPI(bookmarkId);
 
-            // Refresh bookmarks after deletion
-            await loadBookmarks();
+            // 增量更新：直接从本地状态移除书签，避免重新加载导致闪烁
+            setAllBookmarks(prev => {
+                const updated = { ...prev };
+                delete updated[bookmarkId];
+                console.log('🗑️ 本地状态已移除书签:', bookmarkId);
+                return updated;
+            });
 
-            // If we're in search mode, refresh search results
+            // 如果在搜索模式，只刷新搜索结果
             if (searchTerm) {
                 await searchBookmarks(searchTerm);
             }
@@ -91,7 +96,7 @@ export function useBookmarks() {
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to delete bookmark');
         }
-    }, [loadBookmarks, searchBookmarks, searchTerm]);
+    }, [searchBookmarks, searchTerm]);
 
     // Move bookmark
     const moveBookmark = useCallback(async (bookmarkId: string, targetFolderId: string, newIndex: number) => {
@@ -105,10 +110,58 @@ export function useBookmarks() {
 
             console.log('✅ 书签移动成功:', result);
 
-            // Refresh bookmarks after move
-            await loadBookmarks();
+            // 增量更新：更新书签和相关文件夹的children
+            setAllBookmarks(prev => {
+                const updated = { ...prev };
+                const bookmark = updated[bookmarkId];
 
-            // If we're in search mode, refresh search results
+                if (!bookmark) {
+                    console.warn('⚠️ 找不到要移动的书签:', bookmarkId);
+                    return updated;
+                }
+
+                const oldParentId = bookmark.parentId;
+                const newParentId = result.parentId || '';
+
+                // 1. 更新书签本身
+                updated[bookmarkId] = {
+                    ...bookmark,
+                    parentId: newParentId,
+                    index: result.index || 0
+                };
+
+                // 2. 如果是跨文件夹移动，更新旧父文件夹的children
+                if (oldParentId !== newParentId && updated[oldParentId]?.children) {
+                    updated[oldParentId] = {
+                        ...updated[oldParentId],
+                        children: updated[oldParentId].children!.filter(id => id !== bookmarkId)
+                    };
+                }
+
+                // 3. 更新新父文件夹的children
+                if (updated[newParentId]?.children) {
+                    const newChildren = [...updated[newParentId].children!];
+                    // 移除可能存在的重复项
+                    const filteredChildren = newChildren.filter(id => id !== bookmarkId);
+                    // 插入到正确位置
+                    filteredChildren.splice(result.index || 0, 0, bookmarkId);
+
+                    updated[newParentId] = {
+                        ...updated[newParentId],
+                        children: filteredChildren
+                    };
+                }
+
+                console.log('📝 本地状态已更新:', {
+                    bookmark: updated[bookmarkId],
+                    oldParent: oldParentId ? updated[oldParentId] : null,
+                    newParent: updated[newParentId]
+                });
+
+                return updated;
+            });
+
+            // 如果在搜索模式，只刷新搜索结果（不重新加载所有书签）
             if (searchTerm) {
                 await searchBookmarks(searchTerm);
             }
@@ -117,7 +170,7 @@ export function useBookmarks() {
             console.error('❌ 移动书签失败:', err);
             setError(err instanceof Error ? err.message : 'Failed to move bookmark');
         }
-    }, [loadBookmarks, searchBookmarks, searchTerm]);
+    }, [searchBookmarks, searchTerm]);
 
     // Get organized folder data
     const getFolderData = useCallback(() => {

@@ -49,6 +49,7 @@ export async function moveBookmark(
             if (chrome.runtime.lastError) {
                 reject(chrome.runtime.lastError);
             } else {
+                console.log('🎯 移动书签成功:', id, destination, result);
                 resolve(result);
             }
         });
