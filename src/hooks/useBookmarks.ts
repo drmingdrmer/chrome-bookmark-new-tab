@@ -220,6 +220,26 @@ export function useBookmarks() {
         setSearchResults([]);
     }, []);
 
+    // Update bookmark
+    const updateBookmark = useCallback((bookmarkId: string, updates: Partial<Bookmark>) => {
+        setAllBookmarks(prev => {
+            const updated = { ...prev };
+            if (updated[bookmarkId]) {
+                updated[bookmarkId] = {
+                    ...updated[bookmarkId],
+                    ...updates
+                };
+                console.log('📝 本地状态已更新书签:', bookmarkId, updates);
+            }
+            return updated;
+        });
+
+        // 如果在搜索模式且更新的是标题，需要重新搜索
+        if (searchTerm && updates.title) {
+            setTimeout(() => searchBookmarks(searchTerm), 100);
+        }
+    }, [searchTerm, searchBookmarks]);
+
     // Initialize bookmarks on mount
     useEffect(() => {
         loadBookmarks();
@@ -236,6 +256,7 @@ export function useBookmarks() {
         searchBookmarks,
         deleteBookmark,
         moveBookmark,
+        updateBookmark,
         getFolderData,
         clearSearch,
     };

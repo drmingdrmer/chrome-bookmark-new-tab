@@ -28,9 +28,11 @@ export function App() {
         searchTerm,
         isLoading: bookmarksLoading,
         error: bookmarksError,
+        loadBookmarks,
         searchBookmarks,
         deleteBookmark,
         moveBookmark,
+        updateBookmark,
         getFolderData,
         clearSearch,
     } = useBookmarks();
@@ -245,6 +247,7 @@ export function App() {
                         subtitle={subtitle}
                         bookmarks={chunk}
                         onDeleteBookmark={deleteBookmark}
+                        onUpdateBookmark={updateBookmark}
                     />
                 );
             });
@@ -272,6 +275,7 @@ export function App() {
                         folderPath={folderPath}
                         bookmarks={folderBookmarks}
                         onDeleteBookmark={deleteBookmark}
+                        onUpdateBookmark={updateBookmark}
                     />
                 );
             } else {
@@ -288,6 +292,7 @@ export function App() {
                             folderPath={folderPath}
                             bookmarks={chunk}
                             onDeleteBookmark={deleteBookmark}
+                            onUpdateBookmark={updateBookmark}
                         />
                     );
                 });
