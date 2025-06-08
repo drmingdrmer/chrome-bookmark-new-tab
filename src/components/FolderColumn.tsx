@@ -102,11 +102,11 @@ export function FolderColumn({
     return (
         <div
             ref={setNodeRef}
-            className={`group w-full h-full rounded-xl border border-white/10 overflow-hidden transition-all duration-200 flex flex-col ${isOver ? 'ring-2 ring-blue-400/50 border-blue-400/50' : ''
+            className={`w-full h-full rounded-xl border border-white/10 overflow-hidden transition-all duration-200 flex flex-col ${isOver ? 'ring-2 ring-blue-400/50 border-blue-400/50' : ''
                 }`}
         >
             {/* Header */}
-            <div className="px-3 py-1.5 bg-black/20 backdrop-blur-sm">
+            <div className="group px-3 py-1.5 bg-black/20 backdrop-blur-sm">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center min-w-0 flex-1">
                         <h2 className="text-base font-semibold text-white truncate leading-tight">
