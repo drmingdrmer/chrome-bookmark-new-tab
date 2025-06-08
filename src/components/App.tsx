@@ -312,7 +312,7 @@ export function App() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center">
+            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
                 <div className="text-center text-white">
                     <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin" />
                     <p className="text-lg">Loading bookmarks...</p>
@@ -323,7 +323,7 @@ export function App() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900 flex items-center justify-center">
+            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
                 <div className="text-center text-white">
                     <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-400" />
                     <p className="text-lg mb-2">Error loading bookmarks</p>
@@ -341,7 +341,7 @@ export function App() {
             onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
-            <div className="min-h-screen bg-gradient-to-br from-gray-900 via-blue-900 to-gray-900">
+            <div className="min-h-screen bg-gray-900">
                 {/* Header */}
                 <header className="relative p-4">
                     {/* Settings Button */}

@@ -14,6 +14,33 @@ interface FolderColumnProps {
     onDeleteBookmark: (bookmarkId: string) => void;
 }
 
+// Color palette for accent lines
+const ACCENT_COLORS = [
+    '#ef4444', // Red
+    '#f97316', // Orange  
+    '#eab308', // Yellow
+    '#22c55e', // Green
+    '#06b6d4', // Cyan
+    '#3b82f6', // Blue
+    '#8b5cf6', // Violet
+    '#ec4899', // Pink
+    '#10b981', // Emerald
+    '#f59e0b', // Amber
+    '#6366f1', // Indigo
+    '#84cc16', // Lime
+];
+
+let accentColorMap: Record<string, string> = {};
+let accentColorIndex = 0;
+
+function getAccentColor(folderId: string): string {
+    if (!accentColorMap[folderId]) {
+        accentColorMap[folderId] = ACCENT_COLORS[accentColorIndex % ACCENT_COLORS.length];
+        accentColorIndex++;
+    }
+    return accentColorMap[folderId];
+}
+
 export function FolderColumn({
     title,
     subtitle,
@@ -21,7 +48,7 @@ export function FolderColumn({
     bookmarks,
     onDeleteBookmark
 }: FolderColumnProps) {
-    const backgroundColor = folderId ? getFolderColor(folderId) : 'rgba(255, 255, 255, 0.05)';
+    const accentColor = folderId ? getAccentColor(folderId) : '#3b82f6';
 
     const { setNodeRef, isOver } = useDroppable({
         id: folderId || 'root',
@@ -32,12 +59,11 @@ export function FolderColumn({
     return (
         <div
             ref={setNodeRef}
-            className={`w-full rounded-xl border border-white/10 overflow-hidden transition-all duration-200 ${isOver ? 'ring-2 ring-blue-400/50 border-blue-400/50' : ''
+            className={`w-full rounded-xl border border-white/10 overflow-hidden transition-all duration-200 bg-gray-800 ${isOver ? 'ring-2 ring-blue-400/50 border-blue-400/50' : ''
                 }`}
-            style={{ backgroundColor }}
         >
             {/* Header */}
-            <div className="px-3 py-1.5 border-b border-white/10 bg-black/20">
+            <div className="px-3 py-1.5 bg-black/20">
                 <div className="flex items-center justify-between">
                     <div className="flex items-center space-x-1.5">
                         <Folder className="w-4 h-4 text-blue-300" />
@@ -48,6 +74,12 @@ export function FolderColumn({
                     )}
                 </div>
             </div>
+
+            {/* Accent Line */}
+            <div
+                className="h-0.5"
+                style={{ backgroundColor: accentColor }}
+            ></div>
 
             {/* Content */}
             <div className="p-1.5">
