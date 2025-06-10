@@ -14,6 +14,7 @@ interface BookmarkItemProps {
     showUrl?: boolean;
     index?: number;
     showDebugInfo?: boolean;
+    preloadedRating?: BookmarkRating | null;
 }
 
 export function BookmarkItem({
@@ -22,36 +23,30 @@ export function BookmarkItem({
     folderPath = '',
     onDelete,
     showUrl = true,
-    showDebugInfo = false
+    showDebugInfo = false,
+    preloadedRating = null
 }: BookmarkItemProps) {
     // 搜索模式下禁用拖拽功能
     const isSearchMode = !!searchTerm;
 
     // 评分状态
-    const [rating, setRating] = useState<BookmarkRating | null>(null);
+    const [rating, setRating] = useState<BookmarkRating | null>(preloadedRating || null);
 
-    // 加载评分
+    // 只有在没有预加载评分时才异步加载
     useEffect(() => {
-        if (bookmark.url) {
+        if (preloadedRating) {
+            setRating(preloadedRating);
+        } else if (bookmark.url) {
             getRating(bookmark.url).then(setRating).catch(() => setRating(null));
         }
-    }, [bookmark.url]);
+    }, [bookmark.url, preloadedRating]);
 
-    // 监听评分更新事件
+    // 当预加载的评分数据更新时，更新本地状态
     useEffect(() => {
-        const handleRatingUpdate = (event: CustomEvent) => {
-            const updatedUrls = event.detail?.updatedUrls || [];
-            if (bookmark.url && updatedUrls.includes(bookmark.url)) {
-                // 重新加载这个书签的评分
-                getRating(bookmark.url).then(setRating).catch(() => setRating(null));
-            }
-        };
-
-        window.addEventListener('bookmark-ratings-updated', handleRatingUpdate as EventListener);
-        return () => {
-            window.removeEventListener('bookmark-ratings-updated', handleRatingUpdate as EventListener);
-        };
-    }, [bookmark.url]);
+        if (preloadedRating) {
+            setRating(preloadedRating);
+        }
+    }, [preloadedRating]);
 
     const {
         attributes,

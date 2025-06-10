@@ -6,6 +6,7 @@ import { Bookmark } from '@/types/bookmark';
 import { BookmarkItem } from './BookmarkItem';
 import { getFolderColor } from '@/utils/bookmark-helpers';
 import { useBookmarkRatings } from '@/hooks/useBookmarkRatings';
+import { BookmarkRating } from '@/utils/bookmark-ratings';
 
 interface FolderColumnProps {
     title: string;
@@ -16,6 +17,7 @@ interface FolderColumnProps {
     onDeleteBookmark: (bookmarkId: string) => void;
     onUpdateBookmark?: (bookmarkId: string, updates: Partial<Bookmark>) => void;
     showDebugInfo?: boolean;
+    allRatings?: Record<string, BookmarkRating>;
 }
 
 // Color palette for accent lines
@@ -53,7 +55,8 @@ export function FolderColumn({
     bookmarks,
     onDeleteBookmark,
     onUpdateBookmark,
-    showDebugInfo = false
+    showDebugInfo = false,
+    allRatings = {}
 }: FolderColumnProps) {
     const [isRating, setIsRating] = useState(false);
     const [showRatingStatus, setShowRatingStatus] = useState(false);
@@ -273,6 +276,7 @@ export function FolderColumn({
                                     onDelete={onDeleteBookmark}
                                     showUrl={true}
                                     showDebugInfo={showDebugInfo}
+                                    preloadedRating={bookmark.url ? allRatings[bookmark.url] : undefined}
                                 />
                             ))}
                         </SortableContext>

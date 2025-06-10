@@ -7,6 +7,7 @@ import {
     getBookmarkFolderPath,
     resetFolderColors
 } from '@/utils/bookmark-helpers';
+import { getAllRatings, BookmarkRating } from '@/utils/bookmark-ratings';
 
 export function useBookmarks() {
     const [allBookmarks, setAllBookmarks] = useState<Record<string, Bookmark>>({});
@@ -15,6 +16,7 @@ export function useBookmarks() {
     const [searchTerm, setSearchTerm] = useState('');
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
+    const [allRatings, setAllRatings] = useState<Record<string, BookmarkRating>>({});
 
     // Load all bookmarks
     const loadBookmarks = useCallback(async () => {
@@ -22,11 +24,16 @@ export function useBookmarks() {
             setIsLoading(true);
             setError(null);
 
-            const tree = await getAllBookmarks();
-            setBookmarkTreeNodes(tree);
+            // 并行加载书签和评分数据
+            const [tree, ratings] = await Promise.all([
+                getAllBookmarks(),
+                getAllRatings()
+            ]);
 
+            setBookmarkTreeNodes(tree);
             const bookmarksMap = collectAllBookmarks(tree);
             setAllBookmarks(bookmarksMap);
+            setAllRatings(ratings);
 
             // Reset folder colors when reloading
             resetFolderColors();
@@ -245,6 +252,23 @@ export function useBookmarks() {
         loadBookmarks();
     }, [loadBookmarks]);
 
+    // Listen for rating updates and reload ratings
+    useEffect(() => {
+        const handleRatingUpdate = async () => {
+            try {
+                const updatedRatings = await getAllRatings();
+                setAllRatings(updatedRatings);
+            } catch (error) {
+                console.error('Failed to reload ratings after update:', error);
+            }
+        };
+
+        window.addEventListener('bookmark-ratings-updated', handleRatingUpdate);
+        return () => {
+            window.removeEventListener('bookmark-ratings-updated', handleRatingUpdate);
+        };
+    }, []);
+
     return {
         allBookmarks,
         bookmarkTreeNodes,
@@ -252,6 +276,7 @@ export function useBookmarks() {
         searchTerm,
         isLoading,
         error,
+        allRatings,
         loadBookmarks,
         searchBookmarks,
         deleteBookmark,

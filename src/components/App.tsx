@@ -29,6 +29,7 @@ export function App() {
         searchTerm,
         isLoading: bookmarksLoading,
         error: bookmarksError,
+        allRatings,
         loadBookmarks,
         searchBookmarks,
         deleteBookmark,
@@ -226,6 +227,7 @@ export function App() {
                                 onDelete={deleteBookmark}
                                 showUrl={true}
                                 showDebugInfo={config.showDebugInfo}
+                                preloadedRating={bookmark.url ? allRatings[bookmark.url] : undefined}
                             />
                         </div>
                     ))}
@@ -254,6 +256,7 @@ export function App() {
                         onDeleteBookmark={deleteBookmark}
                         onUpdateBookmark={updateBookmark}
                         showDebugInfo={config.showDebugInfo}
+                        allRatings={allRatings}
                     />
                 );
             });
@@ -283,6 +286,7 @@ export function App() {
                         onDeleteBookmark={deleteBookmark}
                         onUpdateBookmark={updateBookmark}
                         showDebugInfo={config.showDebugInfo}
+                        allRatings={allRatings}
                     />
                 );
             } else {
@@ -301,6 +305,7 @@ export function App() {
                             onDeleteBookmark={deleteBookmark}
                             onUpdateBookmark={updateBookmark}
                             showDebugInfo={config.showDebugInfo}
+                            allRatings={allRatings}
                         />
                     );
                 });
@@ -431,6 +436,7 @@ export function App() {
                                     onDelete={() => { }}
                                     showUrl={false}
                                     showDebugInfo={config.showDebugInfo}
+                                    preloadedRating={activeBookmark.url ? allRatings[activeBookmark.url] : undefined}
                                 />
                             </div>
                         ) : null}
