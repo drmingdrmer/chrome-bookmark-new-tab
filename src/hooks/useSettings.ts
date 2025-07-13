@@ -33,7 +33,7 @@ export function useSettings() {
                         aiModel: aiResult.model || ''
                     };
                 } catch (aiError) {
-                    console.warn('Failed to load AI config:', aiError);
+        
                 }
             }
 
@@ -54,22 +54,22 @@ export function useSettings() {
     // Save settings to storage
     const saveSettings = useCallback(async (newConfig: Partial<Config>) => {
         try {
-            console.log('🔧 saveSettings called with:', newConfig);
+    
 
             // 先读取最新的配置，而不是依赖闭包中的config
             const currentConfig = await getStorageData<Config>('config') || DEFAULT_CONFIG;
-            console.log('🔧 Current config from storage:', currentConfig);
+
 
             const updatedConfig = { ...currentConfig, ...newConfig };
-            console.log('🔧 Updated config:', updatedConfig);
+
 
             await setStorageData('config', updatedConfig);
-            console.log('🔧 Successfully saved to storage');
+
 
             setConfig(updatedConfig);
-            console.log('🔧 State updated');
+
         } catch (err) {
-            console.error('🔧 Save error:', err);
+
             setError(err instanceof Error ? err.message : 'Failed to save settings');
         }
     }, []); // 移除config依赖，避免闭包问题
@@ -86,13 +86,13 @@ export function useSettings() {
 
     // Update max entries per column
     const updateMaxEntries = useCallback(async (maxEntries: number) => {
-        console.log('🔢 updateMaxEntries called with:', maxEntries);
+
         if (maxEntries >= 5 && maxEntries <= 100) {
-            console.log('✅ Value in range, saving...');
+
             await saveSettings({ maxEntriesPerColumn: maxEntries });
-            console.log('✅ Save completed');
+
         } else {
-            console.log('❌ Value out of range:', maxEntries);
+
         }
     }, [saveSettings]);
 

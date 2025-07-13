@@ -91,7 +91,7 @@ export function useBookmarks() {
             setAllBookmarks(prev => {
                 const updated = { ...prev };
                 delete updated[bookmarkId];
-                console.log('🗑️ 本地状态已移除书签:', bookmarkId);
+
                 return updated;
             });
 
@@ -107,7 +107,7 @@ export function useBookmarks() {
 
     // Move bookmark
     const moveBookmark = useCallback(async (bookmarkId: string, targetFolderId: string, newIndex: number) => {
-        console.log('🔧 Hook移动书签:', { bookmarkId, targetFolderId, newIndex });
+
 
         // 乐观更新：立即更新本地状态，避免拖拽后的闪烁
         const performOptimisticUpdate = (expectedIndex: number) => {
@@ -116,7 +116,7 @@ export function useBookmarks() {
                 const bookmark = updated[bookmarkId];
 
                 if (!bookmark) {
-                    console.warn('⚠️ 找不到要移动的书签:', bookmarkId);
+        
                     return updated;
                 }
 
@@ -174,11 +174,7 @@ export function useBookmarks() {
                     });
                 }
 
-                console.log('⚡ 乐观更新完成:', {
-                    bookmark: updated[bookmarkId],
-                    oldParent: oldParentId ? updated[oldParentId] : null,
-                    newParent: updated[newParentId]
-                });
+
 
                 return updated;
             });
@@ -193,11 +189,11 @@ export function useBookmarks() {
                 index: newIndex
             });
 
-            console.log('✅ 书签移动成功:', result);
+            
 
             // 如果API返回的index与预期不同，进行校正
             if (result.index !== newIndex) {
-                console.log('🔧 校正索引:', { expected: newIndex, actual: result.index });
+
                 performOptimisticUpdate(result.index || 0);
             }
 
@@ -207,7 +203,7 @@ export function useBookmarks() {
             }
 
         } catch (err) {
-            console.error('❌ 移动书签失败:', err);
+
             setError(err instanceof Error ? err.message : 'Failed to move bookmark');
 
             // 如果API调用失败，恢复原始状态
@@ -236,7 +232,7 @@ export function useBookmarks() {
                     ...updated[bookmarkId],
                     ...updates
                 };
-                console.log('📝 本地状态已更新书签:', bookmarkId, updates);
+    
             }
             return updated;
         });
@@ -259,7 +255,7 @@ export function useBookmarks() {
                 const updatedRatings = await getAllRatings();
                 setAllRatings(updatedRatings);
             } catch (error) {
-                console.error('Failed to reload ratings after update:', error);
+    
             }
         };
 

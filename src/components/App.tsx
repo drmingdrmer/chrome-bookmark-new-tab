@@ -13,8 +13,8 @@ import {
 } from '@dnd-kit/core';
 import { arrayMove } from '@dnd-kit/sortable';
 import { SearchBox } from './SearchBox';
-import { BookmarkItem } from './BookmarkItem';
-import { FolderColumn } from './FolderColumn';
+import BookmarkItem from './BookmarkItem';
+import FolderColumn from './FolderColumn';
 import { SettingsPanel } from './SettingsPanel';
 import { AIAnalysisPanel } from './AIAnalysisPanel';
 import { useBookmarks } from '@/hooks/useBookmarks';
@@ -69,15 +69,12 @@ export function App() {
         const bookmark = allBookmarks[active.id as string];
         if (bookmark) {
             setActiveBookmark(bookmark);
-            console.log('🚀 开始拖拽:', bookmark.title);
         }
     }
 
     function handleDragOver(event: DragOverEvent) {
         const { active, over } = event;
         if (!over) return;
-
-        console.log('📍 拖拽经过:', over.id);
     }
 
     function handleDragEnd(event: DragEndEvent) {
@@ -85,7 +82,6 @@ export function App() {
         setActiveBookmark(null);
 
         if (!over || active.id === over.id) {
-            console.log('🏁 拖拽取消或位置未改变');
             return;
         }
 
@@ -93,11 +89,10 @@ export function App() {
         const overItem = allBookmarks[over.id as string];
 
         if (!activeBookmark) {
-            console.log('❌ 未找到拖拽的书签');
             return;
         }
 
-        console.log('📦 拖拽结束:', activeBookmark.title, '到', over.id);
+
 
         // 情况1: 拖拽到文件夹上
         if (overItem?.isFolder) {
@@ -107,7 +102,6 @@ export function App() {
                 .sort((a, b) => (a.index || 0) - (b.index || 0));
             const newIndex = targetFolderBookmarks.length;
 
-            console.log(`🎯 移动书签 ${activeBookmark.id} 到文件夹 ${targetFolderId} 位置 ${newIndex}`);
             moveBookmark(activeBookmark.id, targetFolderId, newIndex);
             return;
         }
@@ -125,7 +119,6 @@ export function App() {
                     .sort((a, b) => (a.index || 0) - (b.index || 0));
                 const newIndex = targetFolderBookmarks.length;
 
-                console.log(`🎯 移动书签 ${activeBookmark.id} 到根目录 位置 ${newIndex}`);
                 moveBookmark(activeBookmark.id, targetFolderId, newIndex);
                 return;
             }
@@ -138,12 +131,10 @@ export function App() {
                     .sort((a, b) => (a.index || 0) - (b.index || 0));
                 const newIndex = targetFolderBookmarks.length;
 
-                console.log(`🎯 移动书签 ${activeBookmark.id} 到文件夹 ${folderId} 位置 ${newIndex}`);
                 moveBookmark(activeBookmark.id, folderId, newIndex);
                 return;
             }
 
-            console.log('❌ 无法识别的拖拽目标:', over.id);
             return;
         }
 
@@ -159,7 +150,6 @@ export function App() {
 
             // 如果拖拽到原位置，则不需要移动
             if (targetIndex === activeIndex) {
-                console.log('🔄 位置没有变化，无需移动');
                 return;
             }
 
@@ -167,14 +157,9 @@ export function App() {
             // 如果向后移动，新位置是目标位置+1；如果向前移动，新位置就是目标位置
             const newIndex = activeIndex <= targetIndex ? targetIndex + 1 : targetIndex;
 
-            console.log(`🔄 重排序: ${activeBookmark.title} 从位置 ${activeIndex} 到 ${newIndex}`);
-
             // Case 3: 同文件夹内重新排序
-            console.log('📝 同文件夹内重新排序');
-
             // Chrome API的index参数是最终位置，直接使用newIndex即可
             // 之前的"减1"逻辑是错误的理解
-            console.log(`🎯 移动到目标位置: ${newIndex}`);
 
             moveBookmark(activeBookmark.id, parentId, newIndex);
             return;
@@ -189,12 +174,11 @@ export function App() {
             // 使用目标书签的index作为插入位置（在其后插入）
             const newIndex = (overItem.index || 0) + 1;
 
-            console.log(`🎯 移动书签 ${activeBookmark.id} 到文件夹 ${targetFolderId} 位置 ${newIndex}`);
             moveBookmark(activeBookmark.id, targetFolderId, newIndex);
             return;
         }
 
-        console.log('❌ 未处理的拖拽情况:', { activeId: active.id, overId: over.id, overItem });
+
     }
 
     // Render search results

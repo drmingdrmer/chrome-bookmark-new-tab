@@ -17,7 +17,7 @@ interface BookmarkItemProps {
     preloadedRating?: BookmarkRating | null;
 }
 
-export function BookmarkItem({
+function BookmarkItem({
     bookmark,
     searchTerm = '',
     folderPath = '',
@@ -173,7 +173,7 @@ export function BookmarkItem({
                 <div
                     {...attributes}
                     {...listeners}
-                    className="drag-handle opacity-0 group-hover:opacity-50 hover:opacity-100 transition-opacity duration-200 mt-0.5 cursor-grab active:cursor-grabbing"
+                    className="drag-handle opacity-0 group-hover:opacity-50 hover:opacity-100 mt-0.5 cursor-grab active:cursor-grabbing"
                 >
                     <GripVertical className="w-3 h-3 text-gray-400" />
                 </div>
@@ -183,7 +183,7 @@ export function BookmarkItem({
             <div className="flex-1 min-w-0 relative">
                 <a
                     href={bookmark.url}
-                    className="block group-hover:text-blue-300 transition-colors duration-200"
+                    className="block group-hover:text-blue-300"
                     target="_blank"
                     rel="noopener noreferrer"
                     onClick={handleLinkClick}
@@ -262,4 +262,6 @@ export function BookmarkItem({
             </div>
         </div>
     );
-} 
+}
+
+export default React.memo(BookmarkItem);

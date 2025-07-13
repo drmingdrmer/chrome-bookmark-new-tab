@@ -3,7 +3,7 @@ import { Folder, Eraser, Brain } from 'lucide-react';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { Bookmark } from '@/types/bookmark';
-import { BookmarkItem } from './BookmarkItem';
+import BookmarkItem from './BookmarkItem';
 import { getFolderColor } from '@/utils/bookmark-helpers';
 import { useBookmarkRatings } from '@/hooks/useBookmarkRatings';
 import { BookmarkRating } from '@/utils/bookmark-ratings';
@@ -47,7 +47,7 @@ function getAccentColor(folderId: string): string {
     return accentColorMap[folderId];
 }
 
-export function FolderColumn({
+function FolderColumn({
     title,
     subtitle,
     folderId,
@@ -193,7 +193,7 @@ export function FolderColumn({
                         <button
                             onClick={handleAIRating}
                             disabled={isRating || ratingsLoading}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 text-gray-400 hover:text-purple-300 hover:bg-white/10 rounded disabled:opacity-50 disabled:cursor-not-allowed"
+                            className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-purple-300 hover:bg-white/10 rounded disabled:opacity-50 disabled:cursor-not-allowed"
                             title="AI评分书签"
                         >
                             <Brain className={`w-3 h-3 ${isRating || ratingsLoading ? 'animate-pulse' : ''}`} />
@@ -202,7 +202,7 @@ export function FolderColumn({
                         {/* 清理按钮 */}
                         <button
                             onClick={cleanBookmarkTitles}
-                            className="opacity-0 group-hover:opacity-100 transition-opacity duration-200 p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded"
+                            className="opacity-0 group-hover:opacity-100 p-1 text-gray-400 hover:text-white hover:bg-white/10 rounded"
                             title="清理书签标题格式"
                         >
                             <Eraser className="w-3 h-3" />
@@ -235,7 +235,7 @@ export function FolderColumn({
                             </div>
                             <button
                                 onClick={handleCloseRatingStatus}
-                                className="text-gray-400 hover:text-white text-sm px-2 py-1 hover:bg-white/10 rounded transition-colors"
+                                className="text-gray-400 hover:text-white text-sm px-2 py-1 hover:bg-white/10 rounded"
                             >
                                 ✕
                             </button>
@@ -250,7 +250,7 @@ export function FolderColumn({
                             </div>
                             <button
                                 onClick={handleCloseRatingStatus}
-                                className="text-gray-400 hover:text-white text-sm px-2 py-1 hover:bg-white/10 rounded transition-colors"
+                                className="text-gray-400 hover:text-white text-sm px-2 py-1 hover:bg-white/10 rounded"
                             >
                                 ✕
                             </button>
@@ -285,4 +285,6 @@ export function FolderColumn({
             </div>
         </div>
     );
-} 
+}
+
+export default React.memo(FolderColumn);

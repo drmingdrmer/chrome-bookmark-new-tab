@@ -110,7 +110,7 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
                     </div>
                     <button
                         onClick={onClose}
-                        className="text-gray-400 hover:text-white transition-colors duration-200 p-1 hover:bg-white/10 rounded"
+                        className="text-gray-400 hover:text-white p-1 hover:bg-white/10 rounded"
                     >
                         <X className="w-5 h-5" />
                     </button>
@@ -146,7 +146,7 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
                             <button
                                 onClick={handleAnalyzeAll}
                                 disabled={!isConfigValid || isAnalyzing}
-                                className="px-3 py-1.5 text-sm text-purple-300 border border-purple-300/50 hover:bg-purple-300/10 rounded-lg transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="px-3 py-1.5 text-sm text-purple-300 border border-purple-300/50 hover:bg-purple-300/10 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isAnalyzing ? '分析中...' : '分析全部'}
                             </button>
@@ -197,7 +197,7 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
                                                 setSelectedDimension(dimension as BookmarkDimension);
                                                 handleGetRecommendations(dimension as BookmarkDimension);
                                             }}
-                                            className={`px-3 py-1.5 text-sm rounded-lg transition-colors duration-200 ${selectedDimension === dimension
+                                            className={`px-3 py-1.5 text-sm rounded-lg ${selectedDimension === dimension
                                                 ? 'bg-purple-600 text-white'
                                                 : 'bg-white/10 text-gray-300 hover:bg-white/20'
                                                 }`}

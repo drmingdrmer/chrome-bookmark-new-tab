@@ -41,7 +41,6 @@
     /* Drag and drop styles */
     .dragging {
         opacity: 0.5;
-        transform: rotate(2deg);
         box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
         z-index: 1000;
     }
@@ -49,7 +48,6 @@
     .drag-over {
         border-color: rgba(59, 130, 246, 0.5) !important;
         background-color: rgba(59, 130, 246, 0.1) !important;
-        transform: scale(1.02);
     }
 
     .drop-before::before {
@@ -150,19 +148,7 @@ input:focus-visible {
     outline-offset: 2px;
 }
 
-/* Animation for settings panel */
-@keyframes slideDown {
-    from {
-        opacity: 0;
-        transform: translateY(-10px);
-    }
-
-    to {
-        opacity: 1;
-        transform: translateY(0);
-    }
-}
-
+/* Settings panel display - removed animation for performance */
 .animate-slide-down {
-    animation: slideDown 0.2s ease-out;
+    opacity: 1;
 }
