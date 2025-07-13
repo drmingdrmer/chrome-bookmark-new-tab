@@ -4,24 +4,12 @@ import { useAI } from './useAI';
 import { Bookmark } from '@/types/bookmark';
 
 export function useBookmarkRatings() {
-    const [ratings, setRatings] = useState<Record<string, BookmarkRating>>({});
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [progressStep, setProgressStep] = useState<string>('');
     const [showSuccess, setShowSuccess] = useState(false);
 
     const { analyzeBatch, isConfigValid } = useAI();
-
-    // 加载评分数据
-    const loadRatings = useCallback(async () => {
-        try {
-            const allRatings = await getAllRatings();
-            setRatings(allRatings);
-        } catch (error) {
-            console.error('Failed to load ratings:', error);
-            setError('Failed to load ratings');
-        }
-    }, []);
 
     // 批量评分书签
     const rateBookmarks = useCallback(async (bookmarks: Bookmark[]) => {
@@ -70,12 +58,8 @@ export function useBookmarkRatings() {
             // 保存到本地存储
             await saveRatings(newRatings);
 
-            // 更新状态
-            const updatedRatings = { ...ratings };
-            newRatings.forEach(rating => {
-                updatedRatings[rating.url] = rating;
-            });
-            setRatings(updatedRatings);
+            // 通知父组件更新评分数据
+            // 不需要本地状态更新，由父组件重新加载评分
 
             setProgressStep('✅ 评分完成');
             setShowSuccess(true);
@@ -95,42 +79,11 @@ export function useBookmarkRatings() {
             setIsLoading(false);
             // 不在这里清除状态，让组件自己管理状态清除
         }
-    }, [analyzeBatch, isConfigValid, ratings]);
+    }, [analyzeBatch, isConfigValid]);
 
-    // 获取单个书签的评分
-    const getBookmarkRating = useCallback((url: string): BookmarkRating | null => {
-        return ratings[url] || null;
-    }, [ratings]);
 
-    // 检查书签是否已评分
-    const hasRating = useCallback((url: string): boolean => {
-        return !!ratings[url];
-    }, [ratings]);
 
-    // 获取评分统计
-    const getRatingStats = useCallback(() => {
-        const allRatings = Object.values(ratings);
-        const total = allRatings.length;
 
-        if (total === 0) {
-            return { total: 0, average: 0, distribution: {} };
-        }
-
-        const sum = allRatings.reduce((acc, rating) => acc + rating.score, 0);
-        const average = sum / total;
-
-        const distribution = allRatings.reduce((acc, rating) => {
-            acc[rating.dimension] = (acc[rating.dimension] || 0) + 1;
-            return acc;
-        }, {} as Record<string, number>);
-
-        return { total, average: Math.round(average * 10) / 10, distribution };
-    }, [ratings]);
-
-    // 初始化时加载评分
-    useEffect(() => {
-        loadRatings();
-    }, [loadRatings]);
 
     // 清除所有状态
     const clearStatus = useCallback(() => {
@@ -140,16 +93,11 @@ export function useBookmarkRatings() {
     }, []);
 
     return {
-        ratings,
         isLoading,
         error,
         progressStep,
         showSuccess,
         rateBookmarks,
-        getBookmarkRating,
-        hasRating,
-        getRatingStats,
-        loadRatings,
         clearError: () => setError(null),
         clearStatus
     };

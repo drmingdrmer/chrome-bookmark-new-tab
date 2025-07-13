@@ -39,41 +39,50 @@ export function resetFolderColors(): void {
 }
 
 /**
- * Convert bookmark tree nodes to flat bookmark objects
+ * Convert bookmark tree nodes to flat bookmark objects (optimized iterative version)
  */
 export function collectAllBookmarks(nodes: BookmarkTreeNode[]): Record<string, Bookmark> {
     const allBookmarks: Record<string, Bookmark> = {};
+    const stack = [...nodes];
 
-    function traverse(nodes: BookmarkTreeNode[]) {
-        nodes.forEach(node => {
-            if (node.children) {
-                // This is a folder
-                allBookmarks[node.id] = {
-                    id: node.id,
-                    title: node.title,
-                    parentId: node.parentId || '',
-                    isFolder: true,
-                    children: node.children.map(child => child.id),
-                    dateAdded: node.dateAdded,
-                    index: node.index,
-                };
-                traverse(node.children);
-            } else if (node.url) {
-                // This is a bookmark
-                allBookmarks[node.id] = {
-                    id: node.id,
-                    title: node.title || node.url,
-                    url: node.url,
-                    parentId: node.parentId || '',
-                    isFolder: false,
-                    dateAdded: node.dateAdded,
-                    index: node.index,
-                };
+    while (stack.length > 0) {
+        const node = stack.pop()!;
+        
+        if (node.children) {
+            // This is a folder
+            const childIds = new Array(node.children.length);
+            for (let i = 0; i < node.children.length; i++) {
+                childIds[i] = node.children[i].id;
             }
-        });
+            
+            allBookmarks[node.id] = {
+                id: node.id,
+                title: node.title,
+                parentId: node.parentId || '',
+                isFolder: true,
+                children: childIds,
+                dateAdded: node.dateAdded,
+                index: node.index,
+            };
+            
+            // Add children to stack for processing
+            for (let i = node.children.length - 1; i >= 0; i--) {
+                stack.push(node.children[i]);
+            }
+        } else if (node.url) {
+            // This is a bookmark
+            allBookmarks[node.id] = {
+                id: node.id,
+                title: node.title || node.url,
+                url: node.url,
+                parentId: node.parentId || '',
+                isFolder: false,
+                dateAdded: node.dateAdded,
+                index: node.index,
+            };
+        }
     }
 
-    traverse(nodes);
     return allBookmarks;
 }
 

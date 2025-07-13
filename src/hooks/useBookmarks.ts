@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Bookmark, BookmarkTreeNode, Config, SearchResult } from '@/types/bookmark';
-import { getAllBookmarks, searchBookmarks as searchBookmarksAPI, deleteBookmark as deleteBookmarkAPI, moveBookmark as moveBookmarkAPI } from '@/utils/chrome-api';
+import { getAllBookmarks, searchBookmarks as searchBookmarksAPI, deleteBookmark as deleteBookmarkAPI, moveBookmark as moveBookmarkAPI, batchLoadStorageData } from '@/utils/chrome-api';
 import {
     collectAllBookmarks,
     getOrderedTopLevelFolders,
@@ -17,23 +17,25 @@ export function useBookmarks() {
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const [allRatings, setAllRatings] = useState<Record<string, BookmarkRating>>({});
+    const [storageData, setStorageData] = useState<any>(null);
 
-    // Load all bookmarks
+    // Load all bookmarks and storage data
     const loadBookmarks = useCallback(async () => {
         try {
             setIsLoading(true);
             setError(null);
 
-            // 并行加载书签和评分数据
-            const [tree, ratings] = await Promise.all([
+            // 并行加载书签和所有存储数据
+            const [tree, storage] = await Promise.all([
                 getAllBookmarks(),
-                getAllRatings()
+                batchLoadStorageData()
             ]);
 
             setBookmarkTreeNodes(tree);
             const bookmarksMap = collectAllBookmarks(tree);
             setAllBookmarks(bookmarksMap);
-            setAllRatings(ratings);
+            setAllRatings(storage.ratings);
+            setStorageData(storage);
 
             // Reset folder colors when reloading
             resetFolderColors();
@@ -116,7 +118,7 @@ export function useBookmarks() {
                 const bookmark = updated[bookmarkId];
 
                 if (!bookmark) {
-        
+
                     return updated;
                 }
 
@@ -189,7 +191,7 @@ export function useBookmarks() {
                 index: newIndex
             });
 
-            
+
 
             // 如果API返回的index与预期不同，进行校正
             if (result.index !== newIndex) {
@@ -232,7 +234,7 @@ export function useBookmarks() {
                     ...updated[bookmarkId],
                     ...updates
                 };
-    
+
             }
             return updated;
         });
@@ -255,7 +257,7 @@ export function useBookmarks() {
                 const updatedRatings = await getAllRatings();
                 setAllRatings(updatedRatings);
             } catch (error) {
-    
+
             }
         };
 
@@ -273,6 +275,7 @@ export function useBookmarks() {
         isLoading,
         error,
         allRatings,
+        storageData,
         loadBookmarks,
         searchBookmarks,
         deleteBookmark,

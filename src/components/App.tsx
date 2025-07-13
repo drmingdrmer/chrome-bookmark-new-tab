@@ -30,6 +30,7 @@ export function App() {
         isLoading: bookmarksLoading,
         error: bookmarksError,
         allRatings,
+        storageData,
         loadBookmarks,
         searchBookmarks,
         deleteBookmark,
@@ -48,7 +49,7 @@ export function App() {
         closeSettings,
         updateMaxEntries,
         updateShowDebugInfo,
-    } = useSettings();
+    } = useSettings(storageData);
 
     const [activeBookmark, setActiveBookmark] = React.useState<Bookmark | null>(null);
     const [isAIAnalysisOpen, setIsAIAnalysisOpen] = React.useState(false);
@@ -318,10 +319,24 @@ export function App() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-                <div className="text-center text-white">
-                    <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin" />
-                    <p className="text-lg">Loading bookmarks...</p>
+            <div className="min-h-screen w-full bg-black relative" style={{
+                backgroundImage: 'url(../girl-grey.jpg)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                backgroundAttachment: 'fixed'
+            }}>
+                <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
+                <div className="relative z-10 flex items-center justify-center min-h-screen">
+                    <div className="text-center text-white">
+                        <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-blue-400" />
+                        <p className="text-lg mb-2">Loading bookmarks...</p>
+                        <p className="text-sm text-gray-300">
+                            {bookmarksLoading && settingsLoading ? 'Loading bookmarks and settings...' :
+                                bookmarksLoading ? 'Loading bookmarks...' :
+                                    settingsLoading ? 'Loading settings...' : 'Initializing...'}
+                        </p>
+                    </div>
                 </div>
             </div>
         );
@@ -329,11 +344,26 @@ export function App() {
 
     if (error) {
         return (
-            <div className="min-h-screen bg-gray-900 flex items-center justify-center">
-                <div className="text-center text-white">
-                    <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-400" />
-                    <p className="text-lg mb-2">Error loading bookmarks</p>
-                    <p className="text-sm text-gray-400">{error}</p>
+            <div className="min-h-screen w-full bg-black relative" style={{
+                backgroundImage: 'url(../girl-grey.jpg)',
+                backgroundSize: 'cover',
+                backgroundPosition: 'center',
+                backgroundRepeat: 'no-repeat',
+                backgroundAttachment: 'fixed'
+            }}>
+                <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
+                <div className="relative z-10 flex items-center justify-center min-h-screen">
+                    <div className="text-center text-white">
+                        <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-400" />
+                        <p className="text-lg mb-2">Error loading bookmarks</p>
+                        <p className="text-sm text-gray-400">{error}</p>
+                        <button
+                            onClick={() => window.location.reload()}
+                            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white"
+                        >
+                            Try Again
+                        </button>
+                    </div>
                 </div>
             </div>
         );

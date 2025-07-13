@@ -7,41 +7,52 @@ const DEFAULT_CONFIG: Config = {
     showDebugInfo: false,
 };
 
-export function useSettings() {
+export function useSettings(storageData?: any) {
     const [config, setConfig] = useState<Config>(DEFAULT_CONFIG);
     const [isSettingsOpen, setIsSettingsOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
 
-    // Load settings from storage
+    // Load settings from storage data or fallback to individual loading
     const loadSettings = useCallback(async () => {
         try {
             setIsLoading(true);
             setError(null);
 
-            // 加载基本配置
-            const savedConfig = await getStorageData<Config>('config');
+            let finalConfig: Config;
 
-            // 加载AI配置
-            let aiConfig = {};
-            if (typeof chrome !== 'undefined' && chrome.storage) {
-                try {
-                    const aiResult = await chrome.storage.sync.get(['apiUrl', 'apiKey', 'model']);
-                    aiConfig = {
-                        aiApiUrl: aiResult.apiUrl || '',
-                        aiApiKey: aiResult.apiKey || '',
-                        aiModel: aiResult.model || ''
-                    };
-                } catch (aiError) {
-        
+            if (storageData) {
+                // Use pre-loaded storage data
+                finalConfig = {
+                    ...DEFAULT_CONFIG,
+                    ...storageData.config,
+                    aiApiUrl: storageData.aiConfig.apiUrl || '',
+                    aiApiKey: storageData.aiConfig.apiKey || '',
+                    aiModel: storageData.aiConfig.model || ''
+                };
+            } else {
+                // Fallback to individual loading
+                const savedConfig = await getStorageData<Config>('config');
+                let aiConfig = {};
+                if (typeof chrome !== 'undefined' && chrome.storage) {
+                    try {
+                        const aiResult = await chrome.storage.sync.get(['apiUrl', 'apiKey', 'model']);
+                        aiConfig = {
+                            aiApiUrl: aiResult.apiUrl || '',
+                            aiApiKey: aiResult.apiKey || '',
+                            aiModel: aiResult.model || ''
+                        };
+                    } catch (aiError) {
+
+                    }
                 }
-            }
 
-            const finalConfig = {
-                ...DEFAULT_CONFIG,
-                ...savedConfig,
-                ...aiConfig
-            };
+                finalConfig = {
+                    ...DEFAULT_CONFIG,
+                    ...savedConfig,
+                    ...aiConfig
+                };
+            }
 
             setConfig(finalConfig);
         } catch (err) {
@@ -49,12 +60,12 @@ export function useSettings() {
         } finally {
             setIsLoading(false);
         }
-    }, []);
+    }, [storageData]);
 
     // Save settings to storage
     const saveSettings = useCallback(async (newConfig: Partial<Config>) => {
         try {
-    
+
 
             // 先读取最新的配置，而不是依赖闭包中的config
             const currentConfig = await getStorageData<Config>('config') || DEFAULT_CONFIG;

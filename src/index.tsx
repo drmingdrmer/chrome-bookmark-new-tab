@@ -15,7 +15,11 @@ const root = ReactDOM.createRoot(
 );
 
 root.render(
-    <React.StrictMode>
+    process.env.NODE_ENV === 'development' ? (
+        <React.StrictMode>
+            <App />
+        </React.StrictMode>
+    ) : (
         <App />
-    </React.StrictMode>
+    )
 ); 

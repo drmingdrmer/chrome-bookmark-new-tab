@@ -84,4 +84,36 @@ export async function setStorageData<T>(key: string, value: T): Promise<void> {
             }
         });
     });
+}
+
+/**
+ * Batch load all Chrome storage data for performance optimization
+ */
+export async function batchLoadStorageData(): Promise<{
+    config: any;
+    ratings: any;
+    aiConfig: any;
+}> {
+    const [localData, syncData] = await Promise.all([
+        new Promise<any>((resolve) => {
+            chrome.storage.local.get(['config', 'bookmark_ratings'], (result) => {
+                resolve(result);
+            });
+        }),
+        new Promise<any>((resolve) => {
+            chrome.storage.sync.get(['apiUrl', 'apiKey', 'model'], (result) => {
+                resolve(result);
+            });
+        })
+    ]);
+
+    return {
+        config: localData.config || null,
+        ratings: localData.bookmark_ratings || {},
+        aiConfig: {
+            apiUrl: syncData.apiUrl || '',
+            apiKey: syncData.apiKey || '',
+            model: syncData.model || ''
+        }
+    };
 } 
