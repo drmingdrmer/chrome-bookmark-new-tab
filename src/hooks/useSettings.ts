@@ -2,10 +2,13 @@ import { useState, useEffect, useCallback } from 'react';
 import { Config } from '@/types/bookmark';
 import { getStorageData, setStorageData } from '@/utils/chrome-api';
 
-const DEFAULT_CONFIG: Config = {
+export const DEFAULT_CONFIG: Config = {
     maxEntriesPerColumn: 20,
     showDebugInfo: false,
 };
+
+export const MIN_ENTRIES_PER_COLUMN = 5;
+export const MAX_ENTRIES_PER_COLUMN = 100;
 
 export function useSettings(storageData?: any) {
     const [config, setConfig] = useState<Config>(DEFAULT_CONFIG);
@@ -97,14 +100,13 @@ export function useSettings(storageData?: any) {
 
     // Update max entries per column
     const updateMaxEntries = useCallback(async (maxEntries: number) => {
-
-        if (maxEntries >= 5 && maxEntries <= 100) {
-
-            await saveSettings({ maxEntriesPerColumn: maxEntries });
-
-        } else {
-
+        if (maxEntries < MIN_ENTRIES_PER_COLUMN || maxEntries > MAX_ENTRIES_PER_COLUMN) {
+            throw new Error(
+                `每列条目数需在 ${MIN_ENTRIES_PER_COLUMN}-${MAX_ENTRIES_PER_COLUMN} 之间，当前为 ${maxEntries}`
+            );
         }
+
+        await saveSettings({ maxEntriesPerColumn: maxEntries });
     }, [saveSettings]);
 
     // Update show debug info

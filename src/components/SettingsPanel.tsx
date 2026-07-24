@@ -2,13 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Settings, X, Save, Brain, TestTube } from 'lucide-react';
 import { Config } from '@/types/bookmark';
 import { useAI } from '@/hooks/useAI';
+import { DEFAULT_CONFIG, MAX_ENTRIES_PER_COLUMN, MIN_ENTRIES_PER_COLUMN } from '@/hooks/useSettings';
 
 interface SettingsPanelProps {
     isOpen: boolean;
     config: Config;
     onClose: () => void;
-    onUpdateMaxEntries: (maxEntries: number) => void;
-    onUpdateShowDebugInfo: (showDebugInfo: boolean) => void;
+    onUpdateMaxEntries: (maxEntries: number) => Promise<void>;
+    onUpdateShowDebugInfo: (showDebugInfo: boolean) => Promise<void>;
 }
 
 export function SettingsPanel({
@@ -81,8 +82,8 @@ export function SettingsPanel({
     };
 
     const handleReset = () => {
-        setMaxEntries(20);
-        setShowDebugInfo(false);
+        setMaxEntries(DEFAULT_CONFIG.maxEntriesPerColumn);
+        setShowDebugInfo(DEFAULT_CONFIG.showDebugInfo);
         setAiApiUrl('');
         setAiApiKey('');
         setAiModel('');
@@ -168,8 +169,8 @@ export function SettingsPanel({
                         <input
                             id="max-entries"
                             type="number"
-                            min="5"
-                            max="100"
+                            min={MIN_ENTRIES_PER_COLUMN}
+                            max={MAX_ENTRIES_PER_COLUMN}
                             value={maxEntries}
                             onChange={(e) => setMaxEntries(Number(e.target.value))}
                             className="w-20 px-3 py-1 bg-white/10 border border-white/20 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-blue-400 focus:border-transparent"
