@@ -3,8 +3,22 @@ import { Trash2, GripVertical, Star } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Bookmark } from '@/types/bookmark';
-import { highlightSearchTerm } from '@/utils/bookmark-helpers';
+import { splitBySearchTerm } from '@/utils/bookmark-helpers';
 import { BookmarkRating, getRating } from '@/utils/bookmark-ratings';
+
+function Highlighted({ text, searchTerm }: { text: string; searchTerm: string }) {
+    return (
+        <>
+            {splitBySearchTerm(text, searchTerm).map((segment, index) =>
+                segment.isMatch ? (
+                    <mark key={index} className="bg-yellow-200 text-gray-900">{segment.text}</mark>
+                ) : (
+                    <React.Fragment key={index}>{segment.text}</React.Fragment>
+                )
+            )}
+        </>
+    );
+}
 
 interface BookmarkItemProps {
     bookmark: Bookmark;
@@ -85,16 +99,16 @@ function BookmarkItem({
     };
 
     const getHighlightedTitle = () => {
-        return searchTerm ? highlightSearchTerm(bookmark.title, searchTerm) : bookmark.title;
+        return <Highlighted text={bookmark.title} searchTerm={searchTerm} />;
     };
 
     const getHighlightedUrl = () => {
-        if (!bookmark.url) return '';
+        if (!bookmark.url) return null;
 
         // 移除协议前缀
         const cleanUrl = bookmark.url.replace(/^https?:\/\//, '');
 
-        return searchTerm ? highlightSearchTerm(cleanUrl, searchTerm) : cleanUrl;
+        return <Highlighted text={cleanUrl} searchTerm={searchTerm} />;
     };
 
     // 获取评分星级 (适配1-10分制)
@@ -190,10 +204,9 @@ function BookmarkItem({
                 >
                     <div className="mb-0.5">
                         <div className="flex items-center justify-between">
-                            <h3
-                                className="text-sm font-medium text-gray-200 truncate leading-tight flex-1"
-                                dangerouslySetInnerHTML={{ __html: getHighlightedTitle() }}
-                            />
+                            <h3 className="text-sm font-medium text-gray-200 truncate leading-tight flex-1">
+                                {getHighlightedTitle()}
+                            </h3>
 
                             {/* AI评分显示 */}
                             {rating && (
@@ -237,10 +250,9 @@ function BookmarkItem({
                     </div>
 
                     {showUrl && bookmark.url && (
-                        <p
-                            className="text-sm text-gray-500 truncate leading-tight"
-                            dangerouslySetInnerHTML={{ __html: getHighlightedUrl() || '' }}
-                        />
+                        <p className="text-sm text-gray-500 truncate leading-tight">
+                            {getHighlightedUrl()}
+                        </p>
                     )}
 
                     {folderPath && (

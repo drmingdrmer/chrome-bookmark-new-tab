@@ -207,12 +207,23 @@ export function getFolderPath(
     return path.length > 0 ? path.join(' > ') : '';
 }
 
+export interface TextSegment {
+    text: string;
+    isMatch: boolean;
+}
+
 /**
- * Highlight search term in text
+ * Split text into plain and search-term-matching segments
  */
-export function highlightSearchTerm(text: string, searchTerm: string): string {
-    if (!searchTerm) return text;
+export function splitBySearchTerm(text: string, searchTerm: string): TextSegment[] {
+    if (!searchTerm) return [{ text, isMatch: false }];
 
     const regex = new RegExp(`(${searchTerm.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')})`, 'gi');
-    return text.replace(regex, '<mark class="bg-yellow-200 text-gray-900">$1</mark>');
+
+    // A single capture group makes split() interleave separators, so every
+    // odd index is a match.
+    return text
+        .split(regex)
+        .map((part, index) => ({ text: part, isMatch: index % 2 === 1 }))
+        .filter(segment => segment.text !== '');
 } 
