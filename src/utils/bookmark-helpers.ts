@@ -1,4 +1,4 @@
-import { Bookmark, BookmarkTreeNode, FolderColumn } from '@/types/bookmark';
+import { Bookmark, BookmarkTreeNode } from '@/types/bookmark';
 
 // Chrome 固定的根文件夹 ID
 export const BOOKMARKS_BAR_ID = '1';

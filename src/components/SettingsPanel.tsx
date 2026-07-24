@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Settings, X, Save, Brain, TestTube } from 'lucide-react';
 import { Config } from '@/types/bookmark';
 import { useAI } from '@/hooks/useAI';
@@ -32,7 +32,7 @@ export function SettingsPanel({
     const [testDetails, setTestDetails] = useState<any>(null);
     const [isSaving, setIsSaving] = useState(false);
 
-    const { saveConfig, testConnection, isConfigValid, error, clearError } = useAI();
+    const { saveConfig, testConnection, error, clearError } = useAI();
 
     // 只在面板打开时初始化表单状态
     useEffect(() => {
@@ -282,7 +282,7 @@ export function SettingsPanel({
                                                     <div className="text-gray-300 space-y-1">
                                                         <p>• URL: {testDetails.request?.url}</p>
                                                         <p>• 模型: {testDetails.request?.model}</p>
-                                                        <p>• 提示词: "{testDetails.request?.prompt}"</p>
+                                                        <p>• 提示词: &quot;{testDetails.request?.prompt}&quot;</p>
                                                         <p>• 时间: {testDetails.request?.timestamp}</p>
                                                     </div>
                                                 </div>
@@ -303,7 +303,7 @@ export function SettingsPanel({
                                                 {/* Response Content */}
                                                 <div>
                                                     <p className="text-purple-300 font-medium mb-1">💬 回复内容:</p>
-                                                    <p className="text-gray-300 italic">"{testDetails.content}"</p>
+                                                    <p className="text-gray-300 italic">&quot;{testDetails.content}&quot;</p>
                                                 </div>
                                             </div>
                                         )}

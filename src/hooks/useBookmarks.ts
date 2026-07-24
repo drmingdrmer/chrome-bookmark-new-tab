@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { Bookmark, BookmarkTreeNode, Config, SearchResult } from '@/types/bookmark';
+import { Bookmark, BookmarkTreeNode, SearchResult } from '@/types/bookmark';
 import { getAllBookmarks, searchBookmarks as searchBookmarksAPI, deleteBookmark as deleteBookmarkAPI, moveBookmark as moveBookmarkAPI, batchLoadStorageData } from '@/utils/chrome-api';
 import {
     collectAllBookmarks,

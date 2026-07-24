@@ -34,20 +34,6 @@ export interface SearchResult {
     folderPath: string;
 }
 
-export interface FolderColumn {
-    folderId: string;
-    title: string;
-    subtitle?: string;
-    bookmarks: Bookmark[];
-    color: string;
-}
-
-export interface DragData {
-    bookmarkId: string;
-    sourceIndex: number;
-    sourceParentId: string;
-}
-
 // AI分析相关类型
 export type BookmarkDimension = 'work' | 'learn' | 'fun' | 'tool' | 'other';
 

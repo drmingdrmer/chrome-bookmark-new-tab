@@ -4,7 +4,7 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core';
 import { Bookmark } from '@/types/bookmark';
 import BookmarkItem from './BookmarkItem';
-import { BOOKMARKS_BAR_ID, getFolderColor } from '@/utils/bookmark-helpers';
+import { BOOKMARKS_BAR_ID } from '@/utils/bookmark-helpers';
 import { useBookmarkRatings } from '@/hooks/useBookmarkRatings';
 import { BookmarkRating } from '@/utils/bookmark-ratings';
 

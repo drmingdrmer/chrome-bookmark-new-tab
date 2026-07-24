@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Brain, Sparkles, TrendingUp, Target, Clock, X } from 'lucide-react';
+import { Brain, Sparkles, TrendingUp, Target, X } from 'lucide-react';
 import { useAI } from '@/hooks/useAI';
 import { Bookmark, BookmarkDimension } from '@/types/bookmark';
 
@@ -216,7 +216,7 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
                             {/* Recommendation Results */}
                             {dimensionRecommendations.length > 0 && (
                                 <div className="space-y-3">
-                                    {dimensionRecommendations.map((rec, index) => (
+                                    {dimensionRecommendations.map((rec) => (
                                         <div key={rec.bookmark.id} className="p-3 bg-white/5 rounded-lg border-l-2 border-purple-400">
                                             <div className="flex items-start justify-between mb-2">
                                                 <h5 className="text-sm font-medium text-white line-clamp-2">

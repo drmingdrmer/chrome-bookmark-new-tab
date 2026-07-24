@@ -1,4 +1,4 @@
-import { BookmarkTreeNode, Bookmark } from '@/types/bookmark';
+import { BookmarkTreeNode } from '@/types/bookmark';
 
 /**
  * Wrap a callback-style Chrome API call, rejecting on chrome.runtime.lastError

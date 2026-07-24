@@ -3,7 +3,6 @@ import { Settings, AlertCircle, Loader2, Brain } from 'lucide-react';
 import {
     DndContext,
     DragEndEvent,
-    DragOverEvent,
     DragOverlay,
     DragStartEvent,
     closestCenter,
@@ -11,7 +10,6 @@ import {
     useSensor,
     useSensors,
 } from '@dnd-kit/core';
-import { arrayMove } from '@dnd-kit/sortable';
 import { SearchBox } from './SearchBox';
 import BookmarkItem from './BookmarkItem';
 import FolderColumn from './FolderColumn';
@@ -31,7 +29,6 @@ export function App() {
         error: bookmarksError,
         allRatings,
         storageData,
-        loadBookmarks,
         searchBookmarks,
         deleteBookmark,
         moveBookmark,
@@ -71,11 +68,6 @@ export function App() {
         if (bookmark) {
             setActiveBookmark(bookmark);
         }
-    }
-
-    function handleDragOver(event: DragOverEvent) {
-        const { active, over } = event;
-        if (!over) return;
     }
 
     function handleDragEnd(event: DragEndEvent) {
@@ -165,7 +157,7 @@ export function App() {
                 <div className="mb-6 text-center">
                     <p className="text-gray-400">
                         Found {searchResults.length} bookmark{searchResults.length !== 1 ? 's' : ''}
-                        matching "{searchTerm}"
+                        matching &quot;{searchTerm}&quot;
                     </p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
@@ -326,7 +318,6 @@ export function App() {
             sensors={sensors}
             collisionDetection={closestCenter}
             onDragStart={handleDragStart}
-            onDragOver={handleDragOver}
             onDragEnd={handleDragEnd}
         >
             <div className="min-h-screen w-full bg-black relative" style={{

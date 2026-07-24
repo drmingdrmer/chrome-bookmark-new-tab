@@ -1,5 +1,5 @@
-import { useState, useEffect, useCallback } from 'react';
-import { BookmarkRating, getAllRatings, saveRatings } from '@/utils/bookmark-ratings';
+import { useState, useCallback } from 'react';
+import { BookmarkRating, saveRatings } from '@/utils/bookmark-ratings';
 import { useAI } from './useAI';
 import { Bookmark } from '@/types/bookmark';
 
