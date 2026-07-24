@@ -107,36 +107,15 @@ export function App() {
             return;
         }
 
-        // 情况2: 拖拽到文件夹列容器上（over.id是文件夹ID字符串，但不在allBookmarks中）
-        if (typeof over.id === 'string' && !overItem) {
-            // 检查over.id是否是一个有效的文件夹ID
-            const folderId = over.id;
+        // 情况2: 拖拽到 Direct Bookmarks 列的空白区域，其内容属于书签栏
+        if (over.id === 'root') {
+            const targetFolderId = BOOKMARKS_BAR_ID;
+            const targetFolderBookmarks = Object.values(allBookmarks)
+                .filter(b => b.parentId === targetFolderId && !b.isFolder)
+                .sort((a, b) => (a.index || 0) - (b.index || 0));
+            const newIndex = targetFolderBookmarks.length;
 
-            // 如果是'root'或者确实是文件夹ID，则移动到该文件夹
-            if (folderId === 'root' || folderId.startsWith('direct-')) {
-                // 'root' 是 Direct Bookmarks 列，其内容属于书签栏
-                const targetFolderId = BOOKMARKS_BAR_ID;
-                const targetFolderBookmarks = Object.values(allBookmarks)
-                    .filter(b => b.parentId === targetFolderId && !b.isFolder)
-                    .sort((a, b) => (a.index || 0) - (b.index || 0));
-                const newIndex = targetFolderBookmarks.length;
-
-                moveBookmark(activeBookmark.id, targetFolderId, newIndex);
-                return;
-            }
-
-            // 检查是否是有效的文件夹ID
-            const folderExists = Object.values(allBookmarks).some(b => b.isFolder && b.id === folderId);
-            if (folderExists) {
-                const targetFolderBookmarks = Object.values(allBookmarks)
-                    .filter(b => b.parentId === folderId && !b.isFolder)
-                    .sort((a, b) => (a.index || 0) - (b.index || 0));
-                const newIndex = targetFolderBookmarks.length;
-
-                moveBookmark(activeBookmark.id, folderId, newIndex);
-                return;
-            }
-
+            moveBookmark(activeBookmark.id, targetFolderId, newIndex);
             return;
         }
 
