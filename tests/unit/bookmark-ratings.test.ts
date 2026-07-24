@@ -1,66 +1,58 @@
 import {
     BookmarkRating,
-    FULL_STAR_RANGE,
-    MAX_STARS,
-    MIN_STARS,
-    isFullStarRange,
-    isInStarRange,
-    scoreToStars,
+    FULL_SCORE_RANGE,
+    MAX_SCORE,
+    MIN_SCORE,
+    isFullScoreRange,
+    isInScoreRange,
 } from '@/utils/bookmark-ratings';
 
 function rated(score: number): BookmarkRating {
     return { url: 'https://example.com', score, dimension: 'work', reason: '', timestamp: 0 };
 }
 
-describe('scoreToStars', () => {
-    it('maps the 1-10 score onto the 0-5 star scale in half steps', () => {
-        expect([1, 2, 5, 7, 10].map(scoreToStars)).toEqual([0.5, 1, 2.5, 3.5, 5]);
-    });
-});
-
-describe('isFullStarRange', () => {
+describe('isFullScoreRange', () => {
     it('is true for the whole scale', () => {
-        expect(isFullStarRange(FULL_STAR_RANGE)).toBe(true);
-        expect(isFullStarRange({ min: MIN_STARS, max: MAX_STARS })).toBe(true);
+        expect(isFullScoreRange(FULL_SCORE_RANGE)).toBe(true);
+        expect(isFullScoreRange({ min: MIN_SCORE, max: MAX_SCORE })).toBe(true);
     });
 
     it('is false once either end moves inward', () => {
-        expect(isFullStarRange({ min: 1, max: MAX_STARS })).toBe(false);
-        expect(isFullStarRange({ min: MIN_STARS, max: 4 })).toBe(false);
+        expect(isFullScoreRange({ min: 1, max: MAX_SCORE })).toBe(false);
+        expect(isFullScoreRange({ min: MIN_SCORE, max: 9 })).toBe(false);
     });
 });
 
-describe('isInStarRange', () => {
+describe('isInScoreRange', () => {
     it('keeps every bookmark when the range covers the whole scale', () => {
-        expect(isInStarRange(rated(1), FULL_STAR_RANGE)).toBe(true);
-        expect(isInStarRange(rated(10), FULL_STAR_RANGE)).toBe(true);
-        expect(isInStarRange(undefined, FULL_STAR_RANGE)).toBe(true);
+        expect(isInScoreRange(rated(1), FULL_SCORE_RANGE)).toBe(true);
+        expect(isInScoreRange(rated(10), FULL_SCORE_RANGE)).toBe(true);
+        expect(isInScoreRange(undefined, FULL_SCORE_RANGE)).toBe(true);
     });
 
     it('drops unrated bookmarks once the range is narrowed', () => {
-        expect(isInStarRange(undefined, { min: 0, max: 4 })).toBe(false);
-        expect(isInStarRange(undefined, { min: 1, max: MAX_STARS })).toBe(false);
+        expect(isInScoreRange(undefined, { min: 0, max: 9 })).toBe(false);
+        expect(isInScoreRange(undefined, { min: 1, max: MAX_SCORE })).toBe(false);
     });
 
     it('includes both ends of the range', () => {
-        // 4 分即 2 颗星，6 分即 3 颗星
-        expect(isInStarRange(rated(4), { min: 2, max: 3 })).toBe(true);
-        expect(isInStarRange(rated(6), { min: 2, max: 3 })).toBe(true);
+        expect(isInScoreRange(rated(4), { min: 4, max: 6 })).toBe(true);
+        expect(isInScoreRange(rated(6), { min: 4, max: 6 })).toBe(true);
     });
 
     it('excludes scores outside the range', () => {
-        expect(isInStarRange(rated(3), { min: 2, max: 3 })).toBe(false);
-        expect(isInStarRange(rated(7), { min: 2, max: 3 })).toBe(false);
-    });
-
-    it('keeps half-star scores that fall inside the range', () => {
-        // 7 分即 3.5 颗星
-        expect(isInStarRange(rated(7), { min: 3, max: 4 })).toBe(true);
-        expect(isInStarRange(rated(7), { min: 4, max: MAX_STARS })).toBe(false);
+        expect(isInScoreRange(rated(3), { min: 4, max: 6 })).toBe(false);
+        expect(isInScoreRange(rated(7), { min: 4, max: 6 })).toBe(false);
     });
 
     it('matches only one score when both ends are equal', () => {
-        expect(isInStarRange(rated(4), { min: 2, max: 2 })).toBe(true);
-        expect(isInStarRange(rated(5), { min: 2, max: 2 })).toBe(false);
+        expect(isInScoreRange(rated(8), { min: 8, max: 8 })).toBe(true);
+        expect(isInScoreRange(rated(9), { min: 8, max: 8 })).toBe(false);
+    });
+
+    // 每一分都能单独选中，不再像星级那样两分并作一档
+    it('distinguishes adjacent scores', () => {
+        expect([7, 8, 9].map(s => isInScoreRange(rated(s), { min: 8, max: 9 })))
+            .toEqual([false, true, true]);
     });
 });

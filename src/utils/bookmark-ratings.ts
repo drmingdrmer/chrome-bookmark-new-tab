@@ -1,13 +1,12 @@
 // 书签评分存储工具函数
 
-import { StarRange } from '@/types/bookmark';
+import { ScoreRange } from '@/types/bookmark';
 
-// AI 评分为 1-10 分，界面按每 2 分一颗星显示，因此星级范围是 0-5
-export const MIN_STARS = 0;
-export const MAX_STARS = 5;
-const SCORE_PER_STAR = 2;
+// AI 评分为 1-10 分，筛选区间直接按分数取值
+export const MIN_SCORE = 0;
+export const MAX_SCORE = 10;
 
-export const FULL_STAR_RANGE: StarRange = { min: MIN_STARS, max: MAX_STARS };
+export const FULL_SCORE_RANGE: ScoreRange = { min: MIN_SCORE, max: MAX_SCORE };
 
 export interface BookmarkRating {
     url: string;
@@ -19,23 +18,18 @@ export interface BookmarkRating {
 
 const RATINGS_STORAGE_KEY = 'bookmark_ratings';
 
-// 分数转星级，7 分即 3.5 颗星
-export function scoreToStars(score: number): number {
-    return score / SCORE_PER_STAR;
-}
-
 // 是否为完整区间，即不做任何筛选
-export function isFullStarRange(range: StarRange): boolean {
-    return range.min <= MIN_STARS && range.max >= MAX_STARS;
+export function isFullScoreRange(range: ScoreRange): boolean {
+    return range.min <= MIN_SCORE && range.max >= MAX_SCORE;
 }
 
 /**
- * 书签是否落在选定星级区间内
+ * 书签是否落在选定评分区间内
  *
- * 完整区间显示全部书签；一旦收窄，未评分的书签因为没有星级而被排除。
+ * 完整区间显示全部书签；一旦收窄，未评分的书签因为没有分数而被排除。
  */
-export function isInStarRange(rating: BookmarkRating | undefined, range: StarRange): boolean {
-    if (isFullStarRange(range)) {
+export function isInScoreRange(rating: BookmarkRating | undefined, range: ScoreRange): boolean {
+    if (isFullScoreRange(range)) {
         return true;
     }
 
@@ -43,8 +37,7 @@ export function isInStarRange(rating: BookmarkRating | undefined, range: StarRan
         return false;
     }
 
-    const stars = scoreToStars(rating.score);
-    return stars >= range.min && stars <= range.max;
+    return rating.score >= range.min && rating.score <= range.max;
 }
 
 // 获取所有评分

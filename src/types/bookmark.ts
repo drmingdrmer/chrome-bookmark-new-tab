@@ -28,8 +28,8 @@ export interface Config {
     aiModel?: string;
 }
 
-// 按星级筛选显示的书签，min/max 均为闭区间
-export interface StarRange {
+// 按 AI 评分筛选显示的书签，min/max 均为闭区间
+export interface ScoreRange {
     min: number;
     max: number;
 }

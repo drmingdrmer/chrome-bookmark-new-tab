@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Brain, Sparkles, TrendingUp, Target, X } from 'lucide-react';
 import { useAI } from '@/hooks/useAI';
-import { Bookmark, BookmarkDimension } from '@/types/bookmark';
+import { ScoreRangeSlider } from './ScoreRangeSlider';
+import { Bookmark, BookmarkDimension, ScoreRange } from '@/types/bookmark';
 
 interface AIAnalysisPanelProps {
     isOpen: boolean;
     onClose: () => void;
     bookmarks: Bookmark[];
+    scoreRange: ScoreRange;
+    onScoreRangeChange: (range: ScoreRange) => void;
 }
 
 const DIMENSION_LABELS = {
@@ -25,7 +28,13 @@ const DIMENSION_COLORS = {
     other: 'text-gray-400'
 };
 
-export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelProps) {
+export function AIAnalysisPanel({
+    isOpen,
+    onClose,
+    bookmarks,
+    scoreRange,
+    onScoreRangeChange
+}: AIAnalysisPanelProps) {
     const {
         isLoading,
         error,
@@ -138,18 +147,22 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
 
                     {/* Analysis Section */}
                     <div>
-                        <div className="flex items-center justify-between mb-4">
-                            <h4 className="text-md font-medium text-white flex items-center space-x-2">
-                                <TrendingUp className="w-4 h-4" />
-                                <span>书签分析</span>
-                            </h4>
+                        <h4 className="text-md font-medium text-white flex items-center space-x-2 mb-4">
+                            <TrendingUp className="w-4 h-4" />
+                            <span>书签分析</span>
+                        </h4>
+
+                        <div className="flex items-center space-x-3 mb-4">
                             <button
                                 onClick={handleAnalyzeAll}
                                 disabled={!isConfigValid || isAnalyzing}
-                                className="px-3 py-1.5 text-sm text-purple-300 border border-purple-300/50 hover:bg-purple-300/10 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="shrink-0 px-3 py-1.5 text-sm text-purple-300 border border-purple-300/50 hover:bg-purple-300/10 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {isAnalyzing ? '分析中...' : `分析全部 (${bookmarks.length})`}
                             </button>
+
+                            {/* 评分筛选：控制主界面显示哪些书签 */}
+                            <ScoreRangeSlider range={scoreRange} onChange={onScoreRangeChange} />
                         </div>
 
                         {/* 分析进度 */}
