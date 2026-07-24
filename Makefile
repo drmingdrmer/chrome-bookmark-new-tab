@@ -9,7 +9,7 @@
 #   make package     - 打包扩展
 #   make help        - 显示帮助信息
 
-.PHONY: help install dev build test test-watch test-debug clean package lint check reload
+.PHONY: help install dev build test test-unit test-watch test-debug clean package lint check reload
 
 # 默认目标
 .DEFAULT_GOAL := help
@@ -46,6 +46,10 @@ build: ## 构建生产版本
 test: ## 运行所有测试
 	@echo "🧪 运行测试..."
 	npm test
+
+test-unit: ## 只运行单元测试（无需 Chrome，秒级完成）
+	@echo "🧪 运行单元测试..."
+	npm run test:unit
 
 test-watch: ## 监听模式运行测试
 	@echo "👀 监听模式运行测试..."
