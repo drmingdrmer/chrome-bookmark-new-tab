@@ -20,6 +20,35 @@ import { useSettings } from '@/hooks/useSettings';
 import { chunkArray, getFolderPath } from '@/utils/bookmark-helpers';
 import { Bookmark } from '@/types/bookmark';
 
+// 背景图 + 黑色遮罩层，加载中/出错/正常三种状态共用
+function PageBackground({ children }: { children: React.ReactNode }) {
+    return (
+        <div className="min-h-screen w-full bg-black relative" style={{
+            backgroundImage: 'url(girl-grey.jpg)',
+            backgroundSize: 'cover',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            backgroundAttachment: 'fixed'
+        }}>
+            <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
+            {children}
+        </div>
+    );
+}
+
+// 加载中和出错状态共用的居中提示布局
+function CenteredNotice({ children }: { children: React.ReactNode }) {
+    return (
+        <PageBackground>
+            <div className="relative z-10 flex items-center justify-center min-h-screen">
+                <div className="text-center text-white">
+                    {children}
+                </div>
+            </div>
+        </PageBackground>
+    );
+}
+
 export function App() {
     const {
         allBookmarks,
@@ -272,53 +301,31 @@ export function App() {
 
     if (isLoading) {
         return (
-            <div className="min-h-screen w-full bg-black relative" style={{
-                backgroundImage: 'url(girl-grey.jpg)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-                backgroundAttachment: 'fixed'
-            }}>
-                <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
-                <div className="relative z-10 flex items-center justify-center min-h-screen">
-                    <div className="text-center text-white">
-                        <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-blue-400" />
-                        <p className="text-lg mb-2">Loading bookmarks...</p>
-                        <p className="text-sm text-gray-300">
-                            {bookmarksLoading && settingsLoading ? 'Loading bookmarks and settings...' :
-                                bookmarksLoading ? 'Loading bookmarks...' :
-                                    settingsLoading ? 'Loading settings...' : 'Initializing...'}
-                        </p>
-                    </div>
-                </div>
-            </div>
+            <CenteredNotice>
+                <Loader2 className="w-12 h-12 mx-auto mb-4 animate-spin text-blue-400" />
+                <p className="text-lg mb-2">Loading bookmarks...</p>
+                <p className="text-sm text-gray-300">
+                    {bookmarksLoading && settingsLoading ? 'Loading bookmarks and settings...' :
+                        bookmarksLoading ? 'Loading bookmarks...' :
+                            settingsLoading ? 'Loading settings...' : 'Initializing...'}
+                </p>
+            </CenteredNotice>
         );
     }
 
     if (error) {
         return (
-            <div className="min-h-screen w-full bg-black relative" style={{
-                backgroundImage: 'url(girl-grey.jpg)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-                backgroundAttachment: 'fixed'
-            }}>
-                <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
-                <div className="relative z-10 flex items-center justify-center min-h-screen">
-                    <div className="text-center text-white">
-                        <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-400" />
-                        <p className="text-lg mb-2">Error loading bookmarks</p>
-                        <p className="text-sm text-gray-400">{error}</p>
-                        <button
-                            onClick={() => window.location.reload()}
-                            className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white"
-                        >
-                            Try Again
-                        </button>
-                    </div>
-                </div>
-            </div>
+            <CenteredNotice>
+                <AlertCircle className="w-12 h-12 mx-auto mb-4 text-red-400" />
+                <p className="text-lg mb-2">Error loading bookmarks</p>
+                <p className="text-sm text-gray-400">{error}</p>
+                <button
+                    onClick={() => window.location.reload()}
+                    className="mt-4 px-4 py-2 bg-blue-600 hover:bg-blue-700 rounded-lg text-white"
+                >
+                    Try Again
+                </button>
+            </CenteredNotice>
         );
     }
 
@@ -329,16 +336,7 @@ export function App() {
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="min-h-screen w-full bg-black relative" style={{
-                backgroundImage: 'url(girl-grey.jpg)',
-                backgroundSize: 'cover',
-                backgroundPosition: 'center',
-                backgroundRepeat: 'no-repeat',
-                backgroundAttachment: 'fixed'
-            }}>
-                {/* 黑色遮罩层 */}
-                <div className="absolute inset-0 bg-black/40 pointer-events-none"></div>
-
+            <PageBackground>
                 {/* 内容容器 */}
                 <div className="relative z-10">
                     {/* Header */}
@@ -408,7 +406,7 @@ export function App() {
                         ) : null}
                     </DragOverlay>
                 </div>
-            </div>
+            </PageBackground>
         </DndContext>
     );
 } 
