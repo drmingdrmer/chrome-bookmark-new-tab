@@ -1,11 +1,10 @@
 import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { aiService } from '../services/aiService';
-import { BookmarkAnalysis, BookmarkRecommendation, BookmarkDimension, Bookmark } from '../types/bookmark';
+import { Bookmark } from '../types/bookmark';
 
 interface AIState {
     isLoading: boolean;
     error: string | null;
-    recommendations: BookmarkRecommendation[];
 }
 
 interface AIConfig {
@@ -17,8 +16,7 @@ interface AIConfig {
 export function useAI() {
     const [state, setState] = useState<AIState>({
         isLoading: false,
-        error: null,
-        recommendations: []
+        error: null
     });
 
     // 配置是共享的单例状态，任何一处保存后所有使用方立即生效
@@ -76,39 +74,6 @@ export function useAI() {
         onProgress?: (step: string) => void
     ) => aiService.analyzeBatch(bookmarks, onProgress), []);
 
-    // 获取维度推荐
-    const getRecommendations = useCallback(async (
-        dimension: BookmarkDimension,
-        bookmarks: BookmarkAnalysis[],
-        topCount = 5
-    ) => {
-        setState(prev => ({ ...prev, isLoading: true, error: null }));
-
-        try {
-            const recommendations = await aiService.getTopRecommendationsForDimension(
-                dimension,
-                bookmarks,
-                topCount
-            );
-            setState(prev => ({
-                ...prev,
-                isLoading: false,
-                recommendations: [
-                    ...prev.recommendations.filter(r => r.dimension !== dimension),
-                    ...recommendations
-                ]
-            }));
-            return recommendations;
-        } catch (error) {
-            setState(prev => ({
-                ...prev,
-                isLoading: false,
-                error: error instanceof Error ? error.message : '推荐获取失败'
-            }));
-            throw error;
-        }
-    }, []);
-
     // 清除错误
     const clearError = useCallback(() => {
         setState(prev => ({ ...prev, error: null }));
@@ -126,7 +91,6 @@ export function useAI() {
         saveConfig,
         testConnection,
         analyzeBatch,
-        getRecommendations,
         clearError
     };
 } 

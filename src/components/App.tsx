@@ -15,9 +15,11 @@ import BookmarkItem from './BookmarkItem';
 import FolderColumn from './FolderColumn';
 import { SettingsPanel } from './SettingsPanel';
 import { AIAnalysisPanel } from './AIAnalysisPanel';
+import { RecommendationsBar } from './RecommendationsBar';
 import { ScoreRangeSlider } from './ScoreRangeSlider';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useSettings } from '@/hooks/useSettings';
+import { useRecommendations } from '@/hooks/useRecommendations';
 import { chunkArray, getFolderPath } from '@/utils/bookmark-helpers';
 import { FULL_SCORE_RANGE, isFullScoreRange, isInScoreRange } from '@/utils/bookmark-ratings';
 import { Bookmark, ScoreRange } from '@/types/bookmark';
@@ -85,6 +87,25 @@ export function App() {
     const [activeBookmark, setActiveBookmark] = React.useState<Bookmark | null>(null);
     const [isAIAnalysisOpen, setIsAIAnalysisOpen] = React.useState(false);
     const [scoreRange, setScoreRange] = React.useState<ScoreRange>(FULL_SCORE_RANGE);
+
+    // 所有非文件夹书签，推荐刷新与 AI 面板共用
+    const flatBookmarks = React.useMemo(
+        () => Object.values(allBookmarks).filter(b => !b.isFolder),
+        [allBookmarks]
+    );
+
+    const {
+        recommendations,
+        isLoading: recommendationsLoading,
+        error: recommendationsError,
+        isConfigValid: aiConfigValid,
+        refresh: refreshRecommendations,
+    } = useRecommendations();
+
+    const handleRefreshRecommendations = React.useCallback(
+        () => refreshRecommendations(flatBookmarks, allRatings),
+        [refreshRecommendations, flatBookmarks, allRatings]
+    );
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -412,7 +433,18 @@ export function App() {
 
                     {/* Main Content */}
                     <main id="bookmarks-container" className="max-w-none mx-auto pl-4 pr-0 pb-4">
-                        {searchTerm ? renderSearchResults() : bookmarkFolders}
+                        {searchTerm ? renderSearchResults() : (
+                            <>
+                                <RecommendationsBar
+                                    recommendations={recommendations}
+                                    isLoading={recommendationsLoading}
+                                    error={recommendationsError}
+                                    isConfigValid={aiConfigValid}
+                                    onRefresh={handleRefreshRecommendations}
+                                />
+                                {bookmarkFolders}
+                            </>
+                        )}
                     </main>
 
                     {/* Settings Panel */}
@@ -428,7 +460,7 @@ export function App() {
                     <AIAnalysisPanel
                         isOpen={isAIAnalysisOpen}
                         onClose={() => setIsAIAnalysisOpen(false)}
-                        bookmarks={Object.values(allBookmarks).filter(b => !b.isFolder)}
+                        bookmarks={flatBookmarks}
                         allRatings={allRatings}
                     />
 
