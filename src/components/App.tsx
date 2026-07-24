@@ -19,7 +19,7 @@ import { SettingsPanel } from './SettingsPanel';
 import { AIAnalysisPanel } from './AIAnalysisPanel';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useSettings } from '@/hooks/useSettings';
-import { chunkArray, countItemsInFolder, getFolderPath } from '@/utils/bookmark-helpers';
+import { chunkArray, getFolderPath } from '@/utils/bookmark-helpers';
 import { Bookmark } from '@/types/bookmark';
 
 export function App() {
@@ -222,48 +222,31 @@ export function App() {
                 .map(childId => allBookmarks[childId])
                 .filter(bookmark => bookmark && !bookmark.isFolder);
 
-            const itemCount = countItemsInFolder(folder, allBookmarks);
-
             const folderPath = getFolderPath(folder, allBookmarks);
 
-            if (itemCount <= config.maxEntriesPerColumn) {
-                // Single column for this folder
+            // 只含子文件夹的文件夹仍渲染一个空列，作为拖拽落点
+            const chunks = folderBookmarks.length > 0
+                ? chunkArray(folderBookmarks, config.maxEntriesPerColumn)
+                : [[]];
+
+            chunks.forEach((chunk, index) => {
+                const subtitle = chunks.length > 1 ? `(${index + 1}/${chunks.length})` : undefined;
                 columns.push(
                     <FolderColumn
-                        key={folder.id}
-                        columnId={`column:${folder.id}`}
+                        key={`${folder.id}-${index}`}
+                        columnId={`column:${folder.id}-${index}`}
                         title={folder.title}
+                        subtitle={subtitle}
                         folderId={folder.id}
                         folderPath={folderPath}
-                        bookmarks={folderBookmarks}
+                        bookmarks={chunk}
                         onDeleteBookmark={deleteBookmark}
                         onUpdateBookmark={updateBookmark}
                         showDebugInfo={config.showDebugInfo}
                         allRatings={allRatings}
                     />
                 );
-            } else {
-                // Split into multiple columns
-                const chunks = chunkArray(folderBookmarks, config.maxEntriesPerColumn);
-                chunks.forEach((chunk, index) => {
-                    const subtitle = `(${index + 1}/${chunks.length})`;
-                    columns.push(
-                        <FolderColumn
-                            key={`${folder.id}-${index}`}
-                            columnId={`column:${folder.id}-${index}`}
-                            title={folder.title}
-                            subtitle={subtitle}
-                            folderId={folder.id}
-                            folderPath={folderPath}
-                            bookmarks={chunk}
-                            onDeleteBookmark={deleteBookmark}
-                            onUpdateBookmark={updateBookmark}
-                            showDebugInfo={config.showDebugInfo}
-                            allRatings={allRatings}
-                        />
-                    );
-                });
-            }
+            });
         });
 
         if (columns.length === 0) {

@@ -144,27 +144,6 @@ export function getOrderedTopLevelFolders(
 }
 
 /**
- * Count total items in a folder (recursive)
- */
-export function countItemsInFolder(folder: Bookmark, allBookmarks: Record<string, Bookmark>): number {
-    if (!folder.children) return 0;
-
-    let count = 0;
-    folder.children.forEach(childId => {
-        const item = allBookmarks[childId];
-        if (!item) return;
-
-        if (item.isFolder) {
-            count += countItemsInFolder(item, allBookmarks);
-        } else {
-            count++;
-        }
-    });
-
-    return count;
-}
-
-/**
  * Split array into chunks
  */
 export function chunkArray<T>(array: T[], chunkSize: number): T[][] {
