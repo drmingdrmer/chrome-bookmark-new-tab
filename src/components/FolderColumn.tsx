@@ -281,7 +281,7 @@ function FolderColumn({
                                     onDelete={onDeleteBookmark}
                                     showUrl={true}
                                     showDebugInfo={showDebugInfo}
-                                    preloadedRating={bookmark.url ? allRatings[bookmark.url] : undefined}
+                                    rating={bookmark.url ? allRatings[bookmark.url] : undefined}
                                 />
                             ))}
                         </SortableContext>

@@ -1,10 +1,10 @@
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Trash2, GripVertical, Star } from 'lucide-react';
 import { useSortable } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
 import { Bookmark } from '@/types/bookmark';
 import { splitBySearchTerm } from '@/utils/bookmark-helpers';
-import { BookmarkRating, getRating } from '@/utils/bookmark-ratings';
+import { BookmarkRating } from '@/utils/bookmark-ratings';
 
 function Highlighted({ text, searchTerm }: { text: string; searchTerm: string }) {
     return (
@@ -28,7 +28,7 @@ interface BookmarkItemProps {
     showUrl?: boolean;
     index?: number;
     showDebugInfo?: boolean;
-    preloadedRating?: BookmarkRating | null;
+    rating?: BookmarkRating | null;
 }
 
 function BookmarkItem({
@@ -38,29 +38,10 @@ function BookmarkItem({
     onDelete,
     showUrl = true,
     showDebugInfo = false,
-    preloadedRating = null
+    rating = null
 }: BookmarkItemProps) {
     // 搜索模式下禁用拖拽功能
     const isSearchMode = !!searchTerm;
-
-    // 评分状态
-    const [rating, setRating] = useState<BookmarkRating | null>(preloadedRating || null);
-
-    // 只有在没有预加载评分时才异步加载
-    useEffect(() => {
-        if (preloadedRating) {
-            setRating(preloadedRating);
-        } else if (bookmark.url) {
-            getRating(bookmark.url).then(setRating).catch(() => setRating(null));
-        }
-    }, [bookmark.url, preloadedRating]);
-
-    // 当预加载的评分数据更新时，更新本地状态
-    useEffect(() => {
-        if (preloadedRating) {
-            setRating(preloadedRating);
-        }
-    }, [preloadedRating]);
 
     const {
         attributes,

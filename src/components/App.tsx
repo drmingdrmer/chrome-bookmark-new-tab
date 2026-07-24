@@ -178,7 +178,7 @@ export function App() {
                                 onDelete={deleteBookmark}
                                 showUrl={true}
                                 showDebugInfo={config.showDebugInfo}
-                                preloadedRating={bookmark.url ? allRatings[bookmark.url] : undefined}
+                                rating={bookmark.url ? allRatings[bookmark.url] : undefined}
                             />
                         </div>
                     ))}
@@ -419,7 +419,7 @@ export function App() {
                                     onDelete={() => { }}
                                     showUrl={false}
                                     showDebugInfo={config.showDebugInfo}
-                                    preloadedRating={activeBookmark.url ? allRatings[activeBookmark.url] : undefined}
+                                    rating={activeBookmark.url ? allRatings[activeBookmark.url] : undefined}
                                 />
                             </div>
                         ) : null}
