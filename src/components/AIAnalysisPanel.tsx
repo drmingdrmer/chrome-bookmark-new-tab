@@ -39,6 +39,7 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
 
     const [selectedDimension, setSelectedDimension] = useState<BookmarkDimension>('work');
     const [isAnalyzing, setIsAnalyzing] = useState(false);
+    const [progressStep, setProgressStep] = useState('');
 
     if (!isOpen) return null;
 
@@ -49,14 +50,13 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
         }
 
         setIsAnalyzing(true);
+        setProgressStep('');
         clearError();
 
         try {
-            // 限制单次分析的书签数量以控制API调用成本
-            const bookmarksToAnalyze = bookmarks.slice(0, 50);
-            await analyzeBatch(bookmarksToAnalyze, (step) => {
-                // 这里可以添加状态显示，暂时在控制台输出
+            await analyzeBatch(bookmarks, (step) => {
                 console.log(`📊 AI分析: ${step}`);
+                setProgressStep(step);
             });
         } catch (error) {
             console.error('分析失败:', error);
@@ -148,9 +148,14 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
                                 disabled={!isConfigValid || isAnalyzing}
                                 className="px-3 py-1.5 text-sm text-purple-300 border border-purple-300/50 hover:bg-purple-300/10 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {isAnalyzing ? '分析中...' : '分析全部'}
+                                {isAnalyzing ? '分析中...' : `分析全部 (${bookmarks.length})`}
                             </button>
                         </div>
+
+                        {/* 分析进度 */}
+                        {isAnalyzing && progressStep && (
+                            <p className="text-sm text-purple-300 mb-4">{progressStep}</p>
+                        )}
 
                         {/* Analysis Results */}
                         {analyses.length > 0 && (
