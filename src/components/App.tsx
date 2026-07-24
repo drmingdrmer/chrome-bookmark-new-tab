@@ -19,7 +19,7 @@ import { SettingsPanel } from './SettingsPanel';
 import { AIAnalysisPanel } from './AIAnalysisPanel';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useSettings } from '@/hooks/useSettings';
-import { BOOKMARKS_BAR_ID, chunkArray, countItemsInFolder, getFolderPath } from '@/utils/bookmark-helpers';
+import { chunkArray, countItemsInFolder, getFolderPath } from '@/utils/bookmark-helpers';
 import { Bookmark } from '@/types/bookmark';
 
 export function App() {
@@ -95,31 +95,18 @@ export function App() {
 
 
 
-        // 情况1: 拖拽到文件夹上
-        if (overItem?.isFolder) {
-            const targetFolderId = overItem.id;
-            const targetFolderBookmarks = Object.values(allBookmarks)
-                .filter(b => b.parentId === targetFolderId && !b.isFolder)
-                .sort((a, b) => (a.index || 0) - (b.index || 0));
-            const newIndex = targetFolderBookmarks.length;
+        // 情况1: 拖拽到列容器上，追加到该列对应文件夹的末尾
+        // 只有列容器会在 droppable data 中带上 folderId，书签项不会
+        const dropFolderId = over.data.current?.folderId;
+        if (typeof dropFolderId === 'string') {
+            const newIndex = Object.values(allBookmarks)
+                .filter(b => b.parentId === dropFolderId && !b.isFolder).length;
 
-            moveBookmark(activeBookmark.id, targetFolderId, newIndex);
+            moveBookmark(activeBookmark.id, dropFolderId, newIndex);
             return;
         }
 
-        // 情况2: 拖拽到 Direct Bookmarks 列的空白区域，其内容属于书签栏
-        if (over.id === 'root') {
-            const targetFolderId = BOOKMARKS_BAR_ID;
-            const targetFolderBookmarks = Object.values(allBookmarks)
-                .filter(b => b.parentId === targetFolderId && !b.isFolder)
-                .sort((a, b) => (a.index || 0) - (b.index || 0));
-            const newIndex = targetFolderBookmarks.length;
-
-            moveBookmark(activeBookmark.id, targetFolderId, newIndex);
-            return;
-        }
-
-        // 情况3: 拖拽到另一个书签上，进行同文件夹内重排序
+        // 情况2: 拖拽到另一个书签上，进行同文件夹内重排序
         if (overItem && !overItem.isFolder &&
             activeBookmark.parentId === overItem.parentId) {
 
@@ -138,7 +125,6 @@ export function App() {
             // 如果向后移动，新位置是目标位置+1；如果向前移动，新位置就是目标位置
             const newIndex = activeIndex <= targetIndex ? targetIndex + 1 : targetIndex;
 
-            // Case 3: 同文件夹内重新排序
             // Chrome API的index参数是最终位置，直接使用newIndex即可
             // 之前的"减1"逻辑是错误的理解
 
@@ -146,7 +132,7 @@ export function App() {
             return;
         }
 
-        // 情况4: 拖拽到不同文件夹的书签上，移动到该书签所在的文件夹
+        // 情况3: 拖拽到不同文件夹的书签上，移动到该书签所在的文件夹
         if (overItem && !overItem.isFolder &&
             activeBookmark.parentId !== overItem.parentId) {
 
@@ -215,6 +201,7 @@ export function App() {
                 columns.push(
                     <FolderColumn
                         key={`direct-${index}`}
+                        columnId={`column:direct-${index}`}
                         title="Direct Bookmarks"
                         subtitle={subtitle}
                         bookmarks={chunk}
@@ -244,6 +231,7 @@ export function App() {
                 columns.push(
                     <FolderColumn
                         key={folder.id}
+                        columnId={`column:${folder.id}`}
                         title={folder.title}
                         folderId={folder.id}
                         folderPath={folderPath}
@@ -262,6 +250,7 @@ export function App() {
                     columns.push(
                         <FolderColumn
                             key={`${folder.id}-${index}`}
+                            columnId={`column:${folder.id}-${index}`}
                             title={folder.title}
                             subtitle={subtitle}
                             folderId={folder.id}

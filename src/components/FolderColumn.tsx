@@ -4,13 +4,15 @@ import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable'
 import { useDroppable } from '@dnd-kit/core';
 import { Bookmark } from '@/types/bookmark';
 import BookmarkItem from './BookmarkItem';
-import { getFolderColor } from '@/utils/bookmark-helpers';
+import { BOOKMARKS_BAR_ID, getFolderColor } from '@/utils/bookmark-helpers';
 import { useBookmarkRatings } from '@/hooks/useBookmarkRatings';
 import { BookmarkRating } from '@/utils/bookmark-ratings';
 
 interface FolderColumnProps {
     title: string;
     subtitle?: string;
+    /** 该列的唯一 droppable ID；一个文件夹拆成多列时每列各不相同 */
+    columnId: string;
     folderId?: string;
     folderPath?: string;
     bookmarks: Bookmark[];
@@ -50,6 +52,7 @@ function getAccentColor(folderId: string): string {
 function FolderColumn({
     title,
     subtitle,
+    columnId,
     folderId,
     folderPath,
     bookmarks,
@@ -92,8 +95,10 @@ function FolderColumn({
         }
     }, [isRating, ratingsLoading, showSuccess, ratingsError]);
 
+    // droppable ID 必须唯一，落点文件夹通过 data 传给拖拽处理器
     const { setNodeRef, isOver } = useDroppable({
-        id: folderId || 'root',
+        id: columnId,
+        data: { folderId: folderId || BOOKMARKS_BAR_ID },
     });
 
     const bookmarkIds = bookmarks.map(bookmark => bookmark.id);
