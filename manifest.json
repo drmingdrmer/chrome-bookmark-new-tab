@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Bookmark New Tab",
-    "version": "1.0",
+    "version": "2.0.0",
     "description": "Custom new tab page with bookmarks",
     "icons": {
         "16": "icons/favicon-16x16.png",
