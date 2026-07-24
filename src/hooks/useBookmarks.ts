@@ -4,8 +4,7 @@ import { getAllBookmarks, searchBookmarks as searchBookmarksAPI, deleteBookmark 
 import {
     collectAllBookmarks,
     getOrderedTopLevelFolders,
-    getBookmarkFolderPath,
-    resetFolderColors
+    getBookmarkFolderPath
 } from '@/utils/bookmark-helpers';
 import { getAllRatings, BookmarkRating } from '@/utils/bookmark-ratings';
 
@@ -36,9 +35,6 @@ export function useBookmarks() {
             setAllBookmarks(bookmarksMap);
             setAllRatings(storage.ratings);
             setStorageData(storage);
-
-            // Reset folder colors when reloading
-            resetFolderColors();
 
         } catch (err) {
             setError(err instanceof Error ? err.message : 'Failed to load bookmarks');

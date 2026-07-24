@@ -38,15 +38,13 @@ const ACCENT_COLORS = [
     '#84cc16', // Lime
 ];
 
-let accentColorMap: Record<string, string> = {};
-let accentColorIndex = 0;
-
+// 由 folderId 稳定推导颜色：重新加载书签后同一文件夹保持同色
 function getAccentColor(folderId: string): string {
-    if (!accentColorMap[folderId]) {
-        accentColorMap[folderId] = ACCENT_COLORS[accentColorIndex % ACCENT_COLORS.length];
-        accentColorIndex++;
+    let hash = 0;
+    for (let i = 0; i < folderId.length; i++) {
+        hash = (hash * 31 + folderId.charCodeAt(i)) | 0;
     }
-    return accentColorMap[folderId];
+    return ACCENT_COLORS[Math.abs(hash) % ACCENT_COLORS.length];
 }
 
 function FolderColumn({
