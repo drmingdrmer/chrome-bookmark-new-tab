@@ -134,8 +134,8 @@ npm run test:debug
 ## 🔧 使用的Chrome扩展API
 
 - **chrome.bookmarks** - 读取和管理书签
-- **chrome.storage** - 保存用户设置
-- **chrome.tabs** - 新标签页覆盖
+- **chrome.storage** - 保存用户设置和AI评分
+- **chrome_url_overrides** - 覆盖新标签页（无需额外权限）
 
 ## 🚀 性能
 

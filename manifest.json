@@ -11,7 +11,6 @@
     },
     "permissions": [
         "bookmarks",
-        "tabs",
         "storage"
     ],
     "chrome_url_overrides": {
