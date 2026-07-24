@@ -24,7 +24,7 @@ import { chunkArray, getFolderPath } from '@/utils/bookmark-helpers';
 import { FULL_SCORE_RANGE, isFullScoreRange, isInScoreRange } from '@/utils/bookmark-ratings';
 import { Bookmark, ScoreRange } from '@/types/bookmark';
 
-// 评分筛选器和它右侧的等宽占位块共用，两者相等搜索框才会居中
+// 评分筛选器保持固定宽度，避免滑块在窄屏时被压缩
 const SCORE_FILTER_WIDTH = 'w-48 shrink-0';
 
 // 背景图 + 黑色遮罩层，加载中/出错/正常三种状态共用
@@ -331,10 +331,10 @@ export function App() {
         }
 
         return (
-            <div className="grid gap-3" style={{
-                gridTemplateColumns: 'repeat(auto-fill, 300px)',
-                justifyContent: 'start'
-            }}>
+            <div
+                className="grid items-start gap-3 [&>div]:h-auto"
+                style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 18rem), 1fr))' }}
+            >
                 {columns}
             </div>
         );
@@ -391,7 +391,7 @@ export function App() {
                 {/* 内容容器 */}
                 <div className="relative z-10">
                     {/* Header */}
-                    <header className="flex items-center gap-3 p-4 pb-10">
+                    <header className="flex flex-wrap items-center gap-3 px-5 py-4 md:flex-nowrap">
                         {/* AI Analysis Button */}
                         <button
                             onClick={() => setIsAIAnalysisOpen(true)}
@@ -408,7 +408,7 @@ export function App() {
                         </div>
 
                         {/* Search Box */}
-                        <div className="flex-1 min-w-0">
+                        <div className="order-3 basis-full flex-1 min-w-0 md:order-none md:basis-auto">
                             <SearchBox
                                 value={searchTerm}
                                 onSearch={searchBookmarks}
@@ -417,13 +417,13 @@ export function App() {
                         </div>
 
                         {/* 与左侧筛选器等宽，让搜索框保持在页面正中 */}
-                        <div className={SCORE_FILTER_WIDTH} aria-hidden="true" />
+                        <div className={`hidden md:block ${SCORE_FILTER_WIDTH}`} aria-hidden="true" />
 
                         {/* Settings Button */}
                         <button
                             id="settings-toggle"
                             onClick={toggleSettings}
-                            className="shrink-0 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
+                            className="ml-auto shrink-0 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg md:ml-0"
                             aria-label="Settings"
                             tabIndex={-1}
                         >
@@ -432,7 +432,7 @@ export function App() {
                     </header>
 
                     {/* Main Content */}
-                    <main id="bookmarks-container" className="max-w-none mx-auto pl-4 pr-0 pb-4">
+                    <main id="bookmarks-container" className="max-w-none mx-auto px-5 pb-5">
                         {searchTerm ? renderSearchResults() : (
                             <>
                                 <RecommendationsBar
@@ -482,4 +482,4 @@ export function App() {
             </PageBackground>
         </DndContext>
     );
-} 
+}
