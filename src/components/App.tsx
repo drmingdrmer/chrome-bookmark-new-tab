@@ -18,7 +18,8 @@ import { AIAnalysisPanel } from './AIAnalysisPanel';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useSettings } from '@/hooks/useSettings';
 import { chunkArray, getFolderPath } from '@/utils/bookmark-helpers';
-import { Bookmark } from '@/types/bookmark';
+import { FULL_STAR_RANGE, isFullStarRange, isInStarRange } from '@/utils/bookmark-ratings';
+import { Bookmark, StarRange } from '@/types/bookmark';
 
 // 背景图 + 黑色遮罩层，加载中/出错/正常三种状态共用
 function PageBackground({ children }: { children: React.ReactNode }) {
@@ -79,6 +80,7 @@ export function App() {
 
     const [activeBookmark, setActiveBookmark] = React.useState<Bookmark | null>(null);
     const [isAIAnalysisOpen, setIsAIAnalysisOpen] = React.useState(false);
+    const [starRange, setStarRange] = React.useState<StarRange>(FULL_STAR_RANGE);
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -169,14 +171,26 @@ export function App() {
 
     }
 
+    // 书签是否落在当前星级筛选区间内
+    const isInSelectedStars = React.useCallback(
+        (bookmark: Bookmark) => isInStarRange(bookmark.url ? allRatings[bookmark.url] : undefined, starRange),
+        [allRatings, starRange]
+    );
+
     // Render search results
     const renderSearchResults = () => {
-        if (searchResults.length === 0) {
+        const visibleResults = searchResults.filter(({ bookmark }) => isInSelectedStars(bookmark));
+
+        if (visibleResults.length === 0) {
             return (
                 <div className="text-center py-12 text-gray-400">
                     <AlertCircle className="w-10 h-10 mx-auto mb-3 opacity-50" />
                     <p className="text-base mb-1">No bookmarks found</p>
-                    <p className="text-sm">Try searching with different keywords</p>
+                    <p className="text-sm">
+                        {isFullStarRange(starRange)
+                            ? 'Try searching with different keywords'
+                            : `No match within ${starRange.min}-${starRange.max} stars`}
+                    </p>
                 </div>
             );
         }
@@ -185,12 +199,12 @@ export function App() {
             <div className="max-w-4xl mx-auto">
                 <div className="mb-6 text-center">
                     <p className="text-gray-400">
-                        Found {searchResults.length} bookmark{searchResults.length !== 1 ? 's' : ''}
+                        Found {visibleResults.length} bookmark{visibleResults.length !== 1 ? 's' : ''}
                         matching &quot;{searchTerm}&quot;
                     </p>
                 </div>
                 <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                    {searchResults.map(({ bookmark, folderPath }) => (
+                    {visibleResults.map(({ bookmark, folderPath }) => (
                         <div key={bookmark.id} className="bg-black/60 rounded-xl border border-white/10 p-1.5">
                             <BookmarkItem
                                 bookmark={bookmark}
@@ -212,12 +226,14 @@ export function App() {
     // 列只取决于书签数据和显示配置，缓存后拖拽和面板开关不会重建所有列
     const bookmarkFolders = React.useMemo(() => {
         const { folders, directBookmarks } = getFolderData();
+        const isFiltering = !isFullStarRange(starRange);
 
         const columns: React.ReactNode[] = [];
 
         // Add direct bookmarks column if any exist
-        if (directBookmarks.length > 0) {
-            const chunks = chunkArray(directBookmarks, config.maxEntriesPerColumn);
+        const visibleDirectBookmarks = directBookmarks.filter(isInSelectedStars);
+        if (visibleDirectBookmarks.length > 0) {
+            const chunks = chunkArray(visibleDirectBookmarks, config.maxEntriesPerColumn);
             chunks.forEach((chunk, index) => {
                 const subtitle = chunks.length > 1 ? `(${index + 1}/${chunks.length})` : undefined;
                 columns.push(
@@ -242,7 +258,11 @@ export function App() {
 
             const folderBookmarks = folder.children
                 .map(childId => allBookmarks[childId])
-                .filter(bookmark => bookmark && !bookmark.isFolder);
+                .filter(bookmark => bookmark && !bookmark.isFolder)
+                .filter(isInSelectedStars);
+
+            // 筛选时隐藏没有匹配项的列，避免整屏空列
+            if (isFiltering && folderBookmarks.length === 0) return;
 
             const folderPath = getFolderPath(folder, allBookmarks);
 
@@ -276,7 +296,11 @@ export function App() {
                 <div className="text-center py-12 text-gray-400">
                     <AlertCircle className="w-10 h-10 mx-auto mb-3 opacity-50" />
                     <p className="text-base mb-1">No bookmarks found</p>
-                    <p className="text-sm">Start adding bookmarks to see them here</p>
+                    <p className="text-sm">
+                        {isFiltering
+                            ? `No bookmarks rated ${starRange.min}-${starRange.max} stars`
+                            : 'Start adding bookmarks to see them here'}
+                    </p>
                 </div>
             );
         }
@@ -297,6 +321,8 @@ export function App() {
         config.showDebugInfo,
         deleteBookmark,
         updateBookmark,
+        isInSelectedStars,
+        starRange,
     ]);
 
     if (isLoading) {
@@ -389,6 +415,8 @@ export function App() {
                         isOpen={isAIAnalysisOpen}
                         onClose={() => setIsAIAnalysisOpen(false)}
                         bookmarks={Object.values(allBookmarks).filter(b => !b.isFolder)}
+                        starRange={starRange}
+                        onStarRangeChange={setStarRange}
                     />
 
                     {/* Drag Overlay */}

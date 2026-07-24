@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Brain, Sparkles, TrendingUp, Target, X } from 'lucide-react';
 import { useAI } from '@/hooks/useAI';
-import { Bookmark, BookmarkDimension } from '@/types/bookmark';
+import { StarRangeSlider } from './StarRangeSlider';
+import { Bookmark, BookmarkDimension, StarRange } from '@/types/bookmark';
 
 interface AIAnalysisPanelProps {
     isOpen: boolean;
     onClose: () => void;
     bookmarks: Bookmark[];
+    starRange: StarRange;
+    onStarRangeChange: (range: StarRange) => void;
 }
 
 const DIMENSION_LABELS = {
@@ -25,7 +28,13 @@ const DIMENSION_COLORS = {
     other: 'text-gray-400'
 };
 
-export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelProps) {
+export function AIAnalysisPanel({
+    isOpen,
+    onClose,
+    bookmarks,
+    starRange,
+    onStarRangeChange
+}: AIAnalysisPanelProps) {
     const {
         isLoading,
         error,
@@ -150,6 +159,12 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
                             >
                                 {isAnalyzing ? '分析中...' : `分析全部 (${bookmarks.length})`}
                             </button>
+                        </div>
+
+                        {/* 星级筛选：控制主界面显示哪些书签 */}
+                        <div className="mb-4">
+                            <p className="text-xs text-gray-400 mb-2">显示的书签星级范围</p>
+                            <StarRangeSlider range={starRange} onChange={onStarRangeChange} />
                         </div>
 
                         {/* 分析进度 */}

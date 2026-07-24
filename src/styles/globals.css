@@ -133,6 +133,54 @@ input[type="range"]::-moz-range-thumb {
     border: none;
 }
 
+/* Dual-handle star range slider
+   Two inputs stack on one shared track drawn behind them, so each input is
+   transparent to pointer events and only its thumb is grabbable.
+   Selectors include input[type="range"] to outrank the defaults above. */
+input[type="range"].star-range-slider {
+    position: absolute;
+    left: 0;
+    width: 100%;
+    height: 20px;
+    margin: 0;
+    background: transparent;
+    pointer-events: none;
+}
+
+input[type="range"].star-range-slider::-webkit-slider-track {
+    background: transparent;
+    height: 20px;
+}
+
+input[type="range"].star-range-slider::-webkit-slider-thumb {
+    pointer-events: auto;
+    height: 14px;
+    width: 14px;
+    background: #c084fc;
+    border: 2px solid #111827;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    cursor: grab;
+}
+
+input[type="range"].star-range-slider::-webkit-slider-thumb:active {
+    cursor: grabbing;
+}
+
+input[type="range"].star-range-slider::-moz-range-track {
+    background: transparent;
+    height: 20px;
+}
+
+input[type="range"].star-range-slider::-moz-range-thumb {
+    pointer-events: auto;
+    height: 14px;
+    width: 14px;
+    background: #c084fc;
+    border: 2px solid #111827;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.5);
+    cursor: grab;
+}
+
 /* Highlight styles */
 mark {
     background-color: #fef08a;

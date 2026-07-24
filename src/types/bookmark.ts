@@ -28,6 +28,12 @@ export interface Config {
     aiModel?: string;
 }
 
+// 按星级筛选显示的书签，min/max 均为闭区间
+export interface StarRange {
+    min: number;
+    max: number;
+}
+
 export interface SearchResult {
     bookmark: Bookmark;
     matchType: 'title' | 'url';
