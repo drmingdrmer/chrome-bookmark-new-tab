@@ -15,14 +15,44 @@ const VALID_DIMENSIONS: BookmarkDimension[] = ['work', 'learn', 'fun', 'tool', '
 // 每次请求分析的书签数量，过大会让响应超出 token 上限而被截断
 const BATCH_SIZE = 10;
 
-// 单条分析结果（评分+维度+50字理由）的 token 预算，含余量
-const TOKENS_PER_BOOKMARK = 120;
+// 推理模型会先输出一段思考内容，这部分同样计入 completion_tokens，
+// 且长度无法预估（实测同样 6 个书签，思考量在 370-620 tokens 之间波动）。
+// max_tokens 只是上限，没用满不会计费，所以宁可给足也不要卡着正文的长度算。
+const RESPONSE_TOKENS_BASE = 1500;
+const RESPONSE_TOKENS_PER_BOOKMARK = 400;
 
-// 保证 JSON 结构本身有足够空间输出完整
-const MIN_RESPONSE_TOKENS = 500;
+// 多数服务端对单次输出有硬上限，请求超过反而会被拒绝
+const RESPONSE_TOKENS_CAP = 8000;
 
-function responseTokenBudget(itemCount: number): number {
-    return Math.max(MIN_RESPONSE_TOKENS, itemCount * TOKENS_PER_BOOKMARK);
+export function responseTokenBudget(itemCount: number): number {
+    return Math.min(
+        RESPONSE_TOKENS_CAP,
+        RESPONSE_TOKENS_BASE + itemCount * RESPONSE_TOKENS_PER_BOOKMARK
+    );
+}
+
+// 响应因为达到 token 上限而被截断，与"模型没按格式回复"是不同的失败
+class TruncatedResponseError extends Error {
+    constructor(maxTokens: number) {
+        super(`响应在 ${maxTokens} tokens 处被截断`);
+        this.name = 'TruncatedResponseError';
+    }
+}
+
+/**
+ * 从响应中取出 JSON 数组
+ *
+ * 模型经常把结果包在 markdown 代码块里，也可能在数组前后附带说明文字。
+ */
+export function extractJsonArray(response: string): string {
+    const start = response.indexOf('[');
+    const end = response.lastIndexOf(']');
+
+    if (start === -1 || end <= start) {
+        throw new Error('未找到有效的JSON数组响应');
+    }
+
+    return response.slice(start, end + 1);
 }
 
 export class AIService {
@@ -91,10 +121,7 @@ export class AIService {
 
             try {
                 onProgress?.(`🚀 正在分析第 ${batchIndex + 1}/${batches.length} 批（${batch.length} 个书签）...`);
-                const prompt = this.buildBatchAnalysisPrompt(batch);
-                const response = await this.callAPI(prompt, responseTokenBudget(batch.length));
-
-                results.push(...this.parseBatchAnalysisResponse(response, batch));
+                results.push(...await this.analyzeChunk(batch, onProgress));
             } catch (error) {
                 onProgress?.('❌ 分析失败');
                 throw new Error(`批次 ${batchIndex + 1} 分析失败: ${error instanceof Error ? error.message : String(error)}`);
@@ -103,6 +130,37 @@ export class AIService {
 
         onProgress?.('✅ 分析完成');
         return results;
+    }
+
+    /**
+     * 分析一批书签，被截断时二分后重试
+     *
+     * 推理模型的思考长度无法预估，偶尔会长到挤掉正文。拆小后每次请求的
+     * 书签更少、思考更短，通常一次就能拿到完整结果。
+     */
+    private async analyzeChunk(
+        bookmarks: Bookmark[],
+        onProgress?: (step: string) => void
+    ): Promise<BookmarkAnalysis[]> {
+        try {
+            const prompt = this.buildBatchAnalysisPrompt(bookmarks);
+            const response = await this.callAPI(prompt, responseTokenBudget(bookmarks.length));
+
+            return this.parseBatchAnalysisResponse(response, bookmarks);
+        } catch (error) {
+            // 单个书签仍被截断说明不是批量大小的问题，继续拆下去也没有意义
+            if (!(error instanceof TruncatedResponseError) || bookmarks.length < 2) {
+                throw error;
+            }
+
+            const half = Math.ceil(bookmarks.length / 2);
+            onProgress?.(`⚠️ 响应被截断，拆成 ${half} 个一组重试...`);
+
+            return [
+                ...await this.analyzeChunk(bookmarks.slice(0, half), onProgress),
+                ...await this.analyzeChunk(bookmarks.slice(half), onProgress)
+            ];
+        }
     }
 
     // 获取维度推荐
@@ -168,7 +226,9 @@ ${bookmarkList}
 - learn: 学习相关（教程、课程、知识）
 - fun: 娱乐相关（游戏、视频、社交）
 - tool: 工具相关（在线工具、服务）
-- other: 其他未分类内容`;
+- other: 其他未分类内容
+
+请直接输出JSON数组本身，不要包裹markdown代码块，也不要附加说明文字。`;
     }
 
     // 构建推荐提示词
@@ -237,7 +297,14 @@ ${bookmarkList}
         }
 
         const data = await response.json();
-        const content = data.choices?.[0]?.message?.content;
+        const choice = data.choices?.[0];
+
+        // 先判断截断：被截断的正文往往看起来只是格式不对，报"没有JSON"会指错方向
+        if (choice?.finish_reason === 'length') {
+            throw new TruncatedResponseError(maxTokens);
+        }
+
+        const content = choice?.message?.content;
 
         if (!content) {
             throw new Error('API返回数据格式错误，未找到内容');
@@ -250,12 +317,7 @@ ${bookmarkList}
 
     // 解析批量分析响应
     private parseBatchAnalysisResponse(response: string, bookmarks: Bookmark[]): BookmarkAnalysis[] {
-        const jsonMatch = response.match(/\[[\s\S]*\]/);
-        if (!jsonMatch) {
-            throw new Error('未找到有效的JSON数组响应');
-        }
-
-        const results = JSON.parse(jsonMatch[0]);
+        const results = JSON.parse(extractJsonArray(response));
 
         return results.map((result: any, index: number) => {
             const bookmarkIndex = (result.index || (index + 1)) - 1;
@@ -289,12 +351,7 @@ ${bookmarkList}
         bookmarks: BookmarkAnalysis[],
         dimension: BookmarkDimension
     ): BookmarkRecommendation[] {
-        const jsonMatch = response.match(/\[[\s\S]*\]/);
-        if (!jsonMatch) {
-            throw new Error('未找到有效的JSON数组响应');
-        }
-
-        const results = JSON.parse(jsonMatch[0]);
+        const results = JSON.parse(extractJsonArray(response));
 
         return results.map((result: any) => {
             const bookmarkIndex = (result.index || 1) - 1;
