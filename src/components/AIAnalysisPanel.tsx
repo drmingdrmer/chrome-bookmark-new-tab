@@ -52,7 +52,7 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
         clearError();
 
         try {
-            // 只分析前50个书签以避免过长的API调用
+            // 限制单次分析的书签数量以控制API调用成本
             const bookmarksToAnalyze = bookmarks.slice(0, 50);
             await analyzeBatch(bookmarksToAnalyze, (step) => {
                 // 这里可以添加状态显示，暂时在控制台输出

@@ -80,7 +80,7 @@ export function useAI() {
         setState(prev => ({ ...prev, isLoading: true, error: null }));
 
         try {
-            const analyses = await aiService.analyzeBatch(bookmarks, 1, onProgress);
+            const analyses = await aiService.analyzeBatch(bookmarks, onProgress);
             setState(prev => ({
                 ...prev,
                 isLoading: false,

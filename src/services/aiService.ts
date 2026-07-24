@@ -1,4 +1,5 @@
 import { BookmarkAnalysis, BookmarkRecommendation, BookmarkDimension, Bookmark } from '../types/bookmark';
+import { chunkArray } from '../utils/bookmark-helpers';
 
 // AI API 配置
 interface APIConfig {
@@ -9,6 +10,19 @@ interface APIConfig {
 
 // 有效的维度
 const VALID_DIMENSIONS: BookmarkDimension[] = ['work', 'learn', 'fun', 'tool', 'other'];
+
+// 每次请求分析的书签数量，过大会让响应超出 token 上限而被截断
+const BATCH_SIZE = 10;
+
+// 单条分析结果（评分+维度+50字理由）的 token 预算，含余量
+const TOKENS_PER_BOOKMARK = 120;
+
+// 保证 JSON 结构本身有足够空间输出完整
+const MIN_RESPONSE_TOKENS = 500;
+
+function responseTokenBudget(itemCount: number): number {
+    return Math.max(MIN_RESPONSE_TOKENS, itemCount * TOKENS_PER_BOOKMARK);
+}
 
 export class AIService {
     private config: Partial<APIConfig> = {};
@@ -59,32 +73,35 @@ export class AIService {
 
 
 
-    // 批量分析书签
+    // 批量分析书签，按 BATCH_SIZE 分批请求
     async analyzeBatch(
         bookmarks: Bookmark[],
-        batchIndex = 1,
         onProgress?: (step: string) => void
     ): Promise<BookmarkAnalysis[]> {
         if (!this.isConfigValid()) {
             throw new Error('AI配置无效，请先配置API设置');
         }
 
-        try {
-            onProgress?.('🔍 正在准备分析请求...');
-            const prompt = this.buildBatchAnalysisPrompt(bookmarks);
+        const batches = chunkArray(bookmarks, BATCH_SIZE);
+        const results: BookmarkAnalysis[] = [];
 
-            onProgress?.('🚀 正在发送请求到AI服务，请等待响应...');
-            const response = await this.callAPI(prompt);
+        for (let batchIndex = 0; batchIndex < batches.length; batchIndex++) {
+            const batch = batches[batchIndex];
 
-            onProgress?.('⚙️ 正在解析AI分析结果...');
-            const results = this.parseBatchAnalysisResponse(response, bookmarks);
+            try {
+                onProgress?.(`🚀 正在分析第 ${batchIndex + 1}/${batches.length} 批（${batch.length} 个书签）...`);
+                const prompt = this.buildBatchAnalysisPrompt(batch);
+                const response = await this.callAPI(prompt, responseTokenBudget(batch.length));
 
-            onProgress?.('✅ 分析完成');
-            return results;
-        } catch (error) {
-            onProgress?.('❌ 分析失败');
-            throw new Error(`批次 ${batchIndex} 分析失败: ${error instanceof Error ? error.message : String(error)}`);
+                results.push(...this.parseBatchAnalysisResponse(response, batch));
+            } catch (error) {
+                onProgress?.('❌ 分析失败');
+                throw new Error(`批次 ${batchIndex + 1} 分析失败: ${error instanceof Error ? error.message : String(error)}`);
+            }
         }
+
+        onProgress?.('✅ 分析完成');
+        return results;
     }
 
     // 获取维度推荐
@@ -105,7 +122,7 @@ export class AIService {
         const prompt = this.buildRecommendationPrompt(dimension, topBookmarks);
 
         try {
-            const response = await this.callAPI(prompt);
+            const response = await this.callAPI(prompt, responseTokenBudget(topBookmarks.length));
             return this.parseRecommendationResponse(response, topBookmarks, dimension);
         } catch (error) {
             throw new Error(`${dimension}维度推荐失败: ${error instanceof Error ? error.message : String(error)}`);
@@ -189,7 +206,7 @@ ${bookmarkList}
     }
 
     // 调用API
-    private async callAPI(prompt: string): Promise<string> {
+    private async callAPI(prompt: string, maxTokens: number): Promise<string> {
         if (!this.config.apiUrl || !this.config.apiKey || !this.config.model) {
             throw new Error('API配置不完整');
         }
@@ -201,7 +218,7 @@ ${bookmarkList}
                 content: prompt
             }],
             temperature: 0.7,
-            max_tokens: 2000
+            max_tokens: maxTokens
         };
 
         const response = await fetch(this.config.apiUrl, {
