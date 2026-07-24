@@ -3,6 +3,10 @@ import { Bookmark, BookmarkTreeNode, FolderColumn } from '@/types/bookmark';
 // Chrome 固定的根文件夹 ID
 export const BOOKMARKS_BAR_ID = '1';
 export const OTHER_BOOKMARKS_ID = '2';
+export const MOBILE_BOOKMARKS_ID = '3';
+
+// 这些根文件夹本身不显示为路径的一部分
+const ROOT_FOLDER_IDS = [BOOKMARKS_BAR_ID, OTHER_BOOKMARKS_ID, MOBILE_BOOKMARKS_ID];
 
 // Color palette for folders
 const COLOR_PALETTE = [
@@ -121,11 +125,11 @@ export function getOrderedTopLevelFolders(
         });
     }
 
-    // Find Bookmarks Bar and Other Bookmarks in the tree
+    // Find Bookmarks Bar, Other Bookmarks and Mobile Bookmarks in the tree
     bookmarkTreeNodes.forEach(rootNode => {
         if (rootNode.children) {
             rootNode.children.forEach(node => {
-                if (node.id === '1' || node.id === '2') { // Bookmarks Bar or Other Bookmarks
+                if (ROOT_FOLDER_IDS.includes(node.id)) {
                     const rootFolder = allBookmarks[node.id];
                     if (rootFolder) {
                         // Collect direct bookmarks and folders from top level
@@ -182,7 +186,7 @@ export function getBookmarkFolderPath(
     let current = allBookmarks[bookmark.parentId];
 
     while (current && current.id !== '0') {
-        if (current.id !== '1' && current.id !== '2') { // Skip root folders
+        if (!ROOT_FOLDER_IDS.includes(current.id)) { // Skip root folders
             path.unshift(current.title);
         }
         current = allBookmarks[current.parentId];
@@ -202,7 +206,7 @@ export function getFolderPath(
     let current = allBookmarks[folder.parentId];
 
     while (current && current.id !== '0') {
-        if (current.id !== '1' && current.id !== '2') { // Skip root folders
+        if (!ROOT_FOLDER_IDS.includes(current.id)) { // Skip root folders
             path.unshift(current.title);
         }
         current = allBookmarks[current.parentId];
