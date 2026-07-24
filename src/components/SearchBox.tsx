@@ -1,5 +1,8 @@
-import React, { useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Search } from 'lucide-react';
+
+// 击键之间的等待时间，避免每敲一个字符就查询一次书签
+const SEARCH_DEBOUNCE_MS = 200;
 
 interface SearchBoxProps {
     value: string;
@@ -10,15 +13,24 @@ interface SearchBoxProps {
 
 export function SearchBox({ value, onSearch, onClear, placeholder = "Search bookmarks..." }: SearchBoxProps) {
     const [inputValue, setInputValue] = useState(value);
+    const pendingSearch = useRef<ReturnType<typeof setTimeout>>();
+
+    // 输入停止后再查询；组件卸载时取消未触发的查询
+    useEffect(() => {
+        return () => clearTimeout(pendingSearch.current);
+    }, []);
 
     const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const newValue = e.target.value;
         setInputValue(newValue);
-        onSearch(newValue);
+
+        clearTimeout(pendingSearch.current);
+        pendingSearch.current = setTimeout(() => onSearch(newValue), SEARCH_DEBOUNCE_MS);
     };
 
     const handleClear = () => {
         setInputValue('');
+        clearTimeout(pendingSearch.current);
         onClear();
     };
 
