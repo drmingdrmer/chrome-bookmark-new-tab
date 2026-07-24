@@ -14,12 +14,17 @@ describe('responseTokenBudget', () => {
     });
 
     it('grows with the batch size', () => {
-        expect(responseTokenBudget(1)).toBe(1900);
-        expect(responseTokenBudget(6)).toBe(3900);
-        expect(responseTokenBudget(10)).toBe(5500);
+        expect(responseTokenBudget(1)).toBe(3100);
+        expect(responseTokenBudget(6)).toBe(6100);
+    });
+
+    // 实测 6 个书签真实消耗约 700-1120 tokens
+    it('keeps at least a fivefold margin over measured usage', () => {
+        expect(responseTokenBudget(6)).toBeGreaterThanOrEqual(1120 * 5);
     });
 
     it('stops at the cap so the request is not rejected outright', () => {
+        expect(responseTokenBudget(10)).toBe(8000);
         expect(responseTokenBudget(100)).toBe(8000);
     });
 });

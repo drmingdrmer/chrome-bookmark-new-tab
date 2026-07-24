@@ -16,12 +16,17 @@ const VALID_DIMENSIONS: BookmarkDimension[] = ['work', 'learn', 'fun', 'tool', '
 const BATCH_SIZE = 10;
 
 // 推理模型会先输出一段思考内容，这部分同样计入 completion_tokens，
-// 且长度无法预估（实测同样 6 个书签，思考量在 370-620 tokens 之间波动）。
-// max_tokens 只是上限，没用满不会计费，所以宁可给足也不要卡着正文的长度算。
-const RESPONSE_TOKENS_BASE = 1500;
-const RESPONSE_TOKENS_PER_BOOKMARK = 400;
+// 且长度无法预估：实测同样 6 个书签，思考量在 370-620 tokens 之间波动。
+//
+// 实测 6 个书签一批的真实消耗约 700-1120 tokens（思考 + 正文），
+// 即每个书签的边际成本约 150-190。下面按每个书签 600、固定开销 2500
+// 计算，留出 5 倍以上余量吸收思考量的波动。
+// max_tokens 只是上限，没用满不会计费，余量给大不会带来额外成本。
+const RESPONSE_TOKENS_BASE = 2500;
+const RESPONSE_TOKENS_PER_BOOKMARK = 600;
 
-// 多数服务端对单次输出有硬上限，请求超过反而会被拒绝
+// 服务端对单次输出普遍有 8192 的硬上限，超过会被直接拒绝，
+// 因此上限压在其下方。若接口允许更大输出，这里可以再调高。
 const RESPONSE_TOKENS_CAP = 8000;
 
 export function responseTokenBudget(itemCount: number): number {
