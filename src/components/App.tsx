@@ -19,7 +19,7 @@ import { SettingsPanel } from './SettingsPanel';
 import { AIAnalysisPanel } from './AIAnalysisPanel';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useSettings } from '@/hooks/useSettings';
-import { chunkArray, countItemsInFolder, getFolderPath } from '@/utils/bookmark-helpers';
+import { BOOKMARKS_BAR_ID, chunkArray, countItemsInFolder, getFolderPath } from '@/utils/bookmark-helpers';
 import { Bookmark } from '@/types/bookmark';
 
 export function App() {
@@ -114,7 +114,8 @@ export function App() {
 
             // 如果是'root'或者确实是文件夹ID，则移动到该文件夹
             if (folderId === 'root' || folderId.startsWith('direct-')) {
-                const targetFolderId = folderId === 'root' ? '' : '';
+                // 'root' 是 Direct Bookmarks 列，其内容属于书签栏
+                const targetFolderId = BOOKMARKS_BAR_ID;
                 const targetFolderBookmarks = Object.values(allBookmarks)
                     .filter(b => b.parentId === targetFolderId && !b.isFolder)
                     .sort((a, b) => (a.index || 0) - (b.index || 0));

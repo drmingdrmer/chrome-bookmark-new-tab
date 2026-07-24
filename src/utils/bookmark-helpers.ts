@@ -1,5 +1,9 @@
 import { Bookmark, BookmarkTreeNode, FolderColumn } from '@/types/bookmark';
 
+// Chrome 固定的根文件夹 ID
+export const BOOKMARKS_BAR_ID = '1';
+export const OTHER_BOOKMARKS_ID = '2';
+
 // Color palette for folders
 const COLOR_PALETTE = [
     'rgba(255, 179, 186, 0.15)', // Pink
