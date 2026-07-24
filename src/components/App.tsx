@@ -180,7 +180,8 @@ export function App() {
     };
 
     // Render bookmark folders
-    const renderBookmarkFolders = () => {
+    // 列只取决于书签数据和显示配置，缓存后拖拽和面板开关不会重建所有列
+    const bookmarkFolders = React.useMemo(() => {
         const { folders, directBookmarks } = getFolderData();
 
         const columns: React.ReactNode[] = [];
@@ -259,7 +260,15 @@ export function App() {
                 {columns}
             </div>
         );
-    };
+    }, [
+        getFolderData,
+        allBookmarks,
+        allRatings,
+        config.maxEntriesPerColumn,
+        config.showDebugInfo,
+        deleteBookmark,
+        updateBookmark,
+    ]);
 
     if (isLoading) {
         return (
@@ -365,7 +374,7 @@ export function App() {
 
                     {/* Main Content */}
                     <main id="bookmarks-container" className="max-w-none mx-auto pl-4 pr-0 pb-4">
-                        {searchTerm ? renderSearchResults() : renderBookmarkFolders()}
+                        {searchTerm ? renderSearchResults() : bookmarkFolders}
                     </main>
 
                     {/* Settings Panel */}
