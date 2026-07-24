@@ -24,8 +24,8 @@ import { chunkArray, getFolderPath } from '@/utils/bookmark-helpers';
 import { FULL_SCORE_RANGE, isFullScoreRange, isInScoreRange } from '@/utils/bookmark-ratings';
 import { Bookmark, ScoreRange } from '@/types/bookmark';
 
-// 评分筛选器保持固定宽度，避免滑块在窄屏时被压缩
-const SCORE_FILTER_WIDTH = 'w-48 shrink-0';
+// 评分按钮在窄屏独占一行，避免压缩点击目标
+const SCORE_FILTER_WIDTH = 'w-full shrink-0 md:w-56 xl:w-72';
 
 // 背景图 + 黑色遮罩层，加载中/出错/正常三种状态共用
 function PageBackground({ children }: { children: React.ReactNode }) {
@@ -395,7 +395,7 @@ export function App() {
                         {/* AI Analysis Button */}
                         <button
                             onClick={() => setIsAIAnalysisOpen(true)}
-                            className="shrink-0 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
+                            className="order-1 shrink-0 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg md:order-none"
                             aria-label="AI Analysis"
                             tabIndex={-1}
                         >
@@ -403,12 +403,12 @@ export function App() {
                         </button>
 
                         {/* 评分筛选：常驻表头，随时可以调整显示范围 */}
-                        <div className={SCORE_FILTER_WIDTH} title="只显示评分落在该区间内的书签">
+                        <div className={`order-3 basis-full md:order-none md:basis-auto ${SCORE_FILTER_WIDTH}`} title="只显示评分落在该区间内的书签">
                             <ScoreRangeSlider range={scoreRange} onChange={setScoreRange} />
                         </div>
 
                         {/* Search Box */}
-                        <div className="order-3 basis-full flex-1 min-w-0 md:order-none md:basis-auto">
+                        <div className="order-4 basis-full flex-1 min-w-0 md:order-none md:basis-auto">
                             <SearchBox
                                 value={searchTerm}
                                 onSearch={searchBookmarks}
@@ -423,7 +423,7 @@ export function App() {
                         <button
                             id="settings-toggle"
                             onClick={toggleSettings}
-                            className="ml-auto shrink-0 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg md:ml-0"
+                            className="order-2 ml-auto shrink-0 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg md:order-none md:ml-0"
                             aria-label="Settings"
                             tabIndex={-1}
                         >
