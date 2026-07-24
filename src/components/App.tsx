@@ -15,6 +15,7 @@ import BookmarkItem from './BookmarkItem';
 import FolderColumn from './FolderColumn';
 import { SettingsPanel } from './SettingsPanel';
 import { AIAnalysisPanel } from './AIAnalysisPanel';
+import { StarRangeSlider } from './StarRangeSlider';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useSettings } from '@/hooks/useSettings';
 import { chunkArray, getFolderPath } from '@/utils/bookmark-helpers';
@@ -394,6 +395,15 @@ export function App() {
                             onSearch={searchBookmarks}
                             onClear={clearSearch}
                         />
+
+                        {/* 星级筛选：常驻表头，拖动时能立刻看到下方书签增减 */}
+                        <div
+                            className="w-full max-w-lg mx-auto -mt-4 mb-2 flex items-center space-x-3"
+                            title="只显示评分落在该星级区间内的书签"
+                        >
+                            <span className="text-xs text-gray-400 whitespace-nowrap">星级</span>
+                            <StarRangeSlider range={starRange} onChange={setStarRange} />
+                        </div>
                     </header>
 
                     {/* Main Content */}
@@ -415,8 +425,6 @@ export function App() {
                         isOpen={isAIAnalysisOpen}
                         onClose={() => setIsAIAnalysisOpen(false)}
                         bookmarks={Object.values(allBookmarks).filter(b => !b.isFolder)}
-                        starRange={starRange}
-                        onStarRangeChange={setStarRange}
                     />
 
                     {/* Drag Overlay */}
