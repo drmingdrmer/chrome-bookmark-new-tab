@@ -1,5 +1,6 @@
 import { BookmarkAnalysis, BookmarkRecommendation, BookmarkDimension, Bookmark } from '../types/bookmark';
 import { chunkArray } from '../utils/bookmark-helpers';
+import { getAIConfig, migrateAIConfigToLocal, setAIConfig } from '../utils/chrome-api';
 
 // AI API 配置
 interface APIConfig {
@@ -47,7 +48,7 @@ export class AIService {
 
     // 保存配置并刷新，使所有订阅者立即看到新配置
     async saveConfig(config: APIConfig): Promise<Partial<APIConfig>> {
-        await chrome.storage.sync.set(config);
+        await setAIConfig(config);
         this.loadPromise = null;
         return this.loadConfig();
     }
@@ -59,8 +60,8 @@ export class AIService {
 
     private async readConfig(): Promise<Partial<APIConfig>> {
         try {
-            const result = await chrome.storage.sync.get(['apiUrl', 'apiKey', 'model']);
-            this.config = result;
+            this.config = await getAIConfig();
+            await migrateAIConfigToLocal();
 
             console.log('🔧 AI配置加载', 'API配置已加载');
             this.listeners.forEach(listener => listener());

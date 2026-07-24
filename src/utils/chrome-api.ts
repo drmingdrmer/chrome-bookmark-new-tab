@@ -78,26 +78,86 @@ export async function setStorageData<T>(key: string, value: T): Promise<void> {
     console.log('💾 Storage set successful');
 }
 
+const AI_CONFIG_KEYS = ['apiUrl', 'apiKey', 'model'];
+
+export interface AIConfigData {
+    apiUrl: string;
+    apiKey: string;
+    model: string;
+}
+
+/**
+ * Read the AI config, preferring local storage
+ *
+ * Older versions kept it in sync storage, so a value still there is used
+ * until migrateAIConfigToLocal has run.
+ */
+export async function getAIConfig(): Promise<AIConfigData> {
+    const [local, synced] = await Promise.all([
+        promisify<any>(callback => chrome.storage.local.get(AI_CONFIG_KEYS, callback)),
+        promisify<any>(callback => chrome.storage.sync.get(AI_CONFIG_KEYS, callback))
+    ]);
+
+    return {
+        apiUrl: local.apiUrl || synced.apiUrl || '',
+        apiKey: local.apiKey || synced.apiKey || '',
+        model: local.model || synced.model || ''
+    };
+}
+
+/**
+ * Persist the AI config to local storage
+ */
+export async function setAIConfig(config: AIConfigData): Promise<void> {
+    await promisify<void>(callback => chrome.storage.local.set(config, () => callback()));
+}
+
+/**
+ * Move an AI config left in sync storage by older versions into local storage
+ *
+ * Anything in sync storage is replicated to the user's Google account, so the
+ * synced copy is dropped once its values are safe locally.
+ */
+export async function migrateAIConfigToLocal(): Promise<void> {
+    const synced = await promisify<any>(callback => chrome.storage.sync.get(AI_CONFIG_KEYS, callback));
+
+    if (!AI_CONFIG_KEYS.some(key => synced[key])) {
+        return;
+    }
+
+    // 本地已有的值优先，避免用陈旧的同步副本覆盖
+    const local = await promisify<any>(callback => chrome.storage.local.get(AI_CONFIG_KEYS, callback));
+    const missing: Record<string, string> = {};
+    AI_CONFIG_KEYS.forEach(key => {
+        if (!local[key] && synced[key]) {
+            missing[key] = synced[key];
+        }
+    });
+
+    if (Object.keys(missing).length > 0) {
+        await promisify<void>(callback => chrome.storage.local.set(missing, () => callback()));
+    }
+
+    await promisify<void>(callback => chrome.storage.sync.remove(AI_CONFIG_KEYS, () => callback()));
+    console.log('🔧 AI配置已从 storage.sync 迁移到 storage.local');
+}
+
 /**
  * Batch load all Chrome storage data for performance optimization
  */
 export async function batchLoadStorageData(): Promise<{
     config: any;
     ratings: any;
-    aiConfig: any;
+    aiConfig: AIConfigData;
 }> {
-    const [localData, syncData] = await Promise.all([
+    const [localData, aiConfig] = await Promise.all([
         promisify<any>(callback => chrome.storage.local.get(['config', 'bookmark_ratings'], callback)),
-        promisify<any>(callback => chrome.storage.sync.get(['apiUrl', 'apiKey', 'model'], callback))
+        getAIConfig()
     ]);
 
     return {
         config: localData.config || null,
         ratings: localData.bookmark_ratings || {},
-        aiConfig: {
-            apiUrl: syncData.apiUrl || '',
-            apiKey: syncData.apiKey || '',
-            model: syncData.model || ''
-        }
+        aiConfig
     };
 } 

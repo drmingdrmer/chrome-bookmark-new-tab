@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Config } from '@/types/bookmark';
-import { getStorageData, setStorageData } from '@/utils/chrome-api';
+import { getAIConfig, getStorageData, setStorageData } from '@/utils/chrome-api';
 
 export const DEFAULT_CONFIG: Config = {
     maxEntriesPerColumn: 20,
@@ -36,11 +36,11 @@ export function useSettings(storageData?: any) {
             } else {
                 // Fallback to individual loading
                 const savedConfig = await getStorageData<Config>('config');
-                const aiResult = await chrome.storage.sync.get(['apiUrl', 'apiKey', 'model']);
+                const aiResult = await getAIConfig();
                 const aiConfig = {
-                    aiApiUrl: aiResult.apiUrl || '',
-                    aiApiKey: aiResult.apiKey || '',
-                    aiModel: aiResult.model || ''
+                    aiApiUrl: aiResult.apiUrl,
+                    aiApiKey: aiResult.apiKey,
+                    aiModel: aiResult.model
                 };
 
                 finalConfig = {
