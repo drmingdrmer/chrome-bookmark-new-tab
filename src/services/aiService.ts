@@ -12,27 +12,49 @@ const VALID_DIMENSIONS: BookmarkDimension[] = ['work', 'learn', 'fun', 'tool', '
 
 export class AIService {
     private config: Partial<APIConfig> = {};
+    private listeners = new Set<() => void>();
+    private loadPromise: Promise<Partial<APIConfig>> | null = null;
 
-    // 加载配置
+    // 订阅配置变化，让所有使用方共享同一份配置状态
+    subscribe = (listener: () => void): (() => void) => {
+        this.listeners.add(listener);
+        return () => {
+            this.listeners.delete(listener);
+        };
+    };
+
+    // 加载配置：并发调用共享同一次存储读取
     async loadConfig(): Promise<Partial<APIConfig>> {
+        if (!this.loadPromise) {
+            this.loadPromise = this.readConfig();
+        }
+        return this.loadPromise;
+    }
+
+    // 保存配置并刷新，使所有订阅者立即看到新配置
+    async saveConfig(config: APIConfig): Promise<Partial<APIConfig>> {
+        await chrome.storage.sync.set(config);
+        this.loadPromise = null;
+        return this.loadConfig();
+    }
+
+    // 验证配置是否有效
+    isConfigValid = (): boolean => {
+        return !!(this.config.apiKey && this.config.apiUrl && this.config.model);
+    };
+
+    private async readConfig(): Promise<Partial<APIConfig>> {
         try {
-            // 从 Chrome 存储中获取配置
-            if (typeof chrome !== 'undefined' && chrome.storage) {
-                const result = await chrome.storage.sync.get(['apiUrl', 'apiKey', 'model']);
-                this.config = result;
-            }
+            const result = await chrome.storage.sync.get(['apiUrl', 'apiKey', 'model']);
+            this.config = result;
 
             console.log('🔧 AI配置加载', 'API配置已加载');
+            this.listeners.forEach(listener => listener());
             return this.config;
         } catch (error) {
             console.error('AI配置加载失败:', error);
             throw error;
         }
-    }
-
-    // 验证配置是否有效
-    isConfigValid(): boolean {
-        return !!(this.config.apiKey && this.config.apiUrl && this.config.model);
     }
 
 

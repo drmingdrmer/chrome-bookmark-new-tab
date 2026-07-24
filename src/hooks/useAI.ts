@@ -1,9 +1,8 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useSyncExternalStore } from 'react';
 import { aiService } from '../services/aiService';
 import { BookmarkAnalysis, BookmarkRecommendation, BookmarkDimension, Bookmark } from '../types/bookmark';
 
 interface AIState {
-    isConfigValid: boolean;
     isLoading: boolean;
     error: string | null;
     analyses: BookmarkAnalysis[];
@@ -18,27 +17,24 @@ interface AIConfig {
 
 export function useAI() {
     const [state, setState] = useState<AIState>({
-        isConfigValid: false,
         isLoading: false,
         error: null,
         analyses: [],
         recommendations: []
     });
 
+    // 配置是共享的单例状态，任何一处保存后所有使用方立即生效
+    const isConfigValid = useSyncExternalStore(aiService.subscribe, aiService.isConfigValid);
+
     // 加载配置
     const loadConfig = useCallback(async () => {
         try {
             await aiService.loadConfig();
-            setState(prev => ({
-                ...prev,
-                isConfigValid: aiService.isConfigValid(),
-                error: null
-            }));
+            setState(prev => ({ ...prev, error: null }));
         } catch (error) {
             setState(prev => ({
                 ...prev,
-                error: error instanceof Error ? error.message : '配置加载失败',
-                isConfigValid: false
+                error: error instanceof Error ? error.message : '配置加载失败'
             }));
         }
     }, []);
@@ -46,15 +42,8 @@ export function useAI() {
     // 保存配置
     const saveConfig = useCallback(async (config: AIConfig) => {
         try {
-            if (typeof chrome !== 'undefined' && chrome.storage) {
-                await chrome.storage.sync.set(config);
-                await aiService.loadConfig();
-                setState(prev => ({
-                    ...prev,
-                    isConfigValid: aiService.isConfigValid(),
-                    error: null
-                }));
-            }
+            await aiService.saveConfig(config);
+            setState(prev => ({ ...prev, error: null }));
         } catch (error) {
             setState(prev => ({
                 ...prev,
@@ -166,6 +155,7 @@ export function useAI() {
 
     return {
         ...state,
+        isConfigValid,
         loadConfig,
         saveConfig,
         testConnection,
