@@ -232,38 +232,37 @@ ${bookmarkList}
 
     // 解析批量分析响应
     private parseBatchAnalysisResponse(response: string, bookmarks: Bookmark[]): BookmarkAnalysis[] {
-        try {
-            const jsonMatch = response.match(/\[[\s\S]*\]/);
-            if (!jsonMatch) {
-                throw new Error('未找到有效的JSON数组响应');
+        const jsonMatch = response.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) {
+            throw new Error('未找到有效的JSON数组响应');
+        }
+
+        const results = JSON.parse(jsonMatch[0]);
+
+        return results.map((result: any, index: number) => {
+            const bookmarkIndex = (result.index || (index + 1)) - 1;
+            const bookmark = bookmarks[bookmarkIndex] || bookmarks[index];
+
+            if (!bookmark) {
+                throw new Error(`无法找到索引 ${bookmarkIndex} 对应的书签`);
             }
 
-            const results = JSON.parse(jsonMatch[0]);
+            const score = Number(result.score);
+            if (!Number.isFinite(score) || score < 1 || score > 10) {
+                throw new Error(`书签「${bookmark.title}」的评分无效: ${result.score}`);
+            }
 
-            return results.map((result: any, index: number) => {
-                const bookmarkIndex = (result.index || (index + 1)) - 1;
-                const bookmark = bookmarks[bookmarkIndex] || bookmarks[index];
+            if (!VALID_DIMENSIONS.includes(result.dimension)) {
+                throw new Error(`书签「${bookmark.title}」的维度无效: ${result.dimension}`);
+            }
 
-                if (!bookmark) {
-                    throw new Error(`无法找到索引 ${bookmarkIndex} 对应的书签`);
-                }
-
-                return {
-                    bookmark: bookmark,
-                    score: Number(result.score) || 1,
-                    dimension: result.dimension || 'other',
-                    reason: result.reason || '无分析理由'
-                };
-            });
-        } catch (error) {
-            // 解析失败时返回默认结果
-            return bookmarks.map(bookmark => ({
+            return {
                 bookmark: bookmark,
-                score: 1,
-                dimension: 'other' as BookmarkDimension,
-                reason: '批量解析失败，使用默认值'
-            }));
-        }
+                score: score,
+                dimension: result.dimension,
+                reason: result.reason || '无分析理由'
+            };
+        });
     }
 
     // 解析推荐响应
@@ -272,42 +271,30 @@ ${bookmarkList}
         bookmarks: BookmarkAnalysis[],
         dimension: BookmarkDimension
     ): BookmarkRecommendation[] {
-        try {
-            const jsonMatch = response.match(/\[[\s\S]*\]/);
-            if (!jsonMatch) {
-                throw new Error('未找到有效的JSON数组响应');
+        const jsonMatch = response.match(/\[[\s\S]*\]/);
+        if (!jsonMatch) {
+            throw new Error('未找到有效的JSON数组响应');
+        }
+
+        const results = JSON.parse(jsonMatch[0]);
+
+        return results.map((result: any) => {
+            const bookmarkIndex = (result.index || 1) - 1;
+            const bookmarkAnalysis = bookmarks[bookmarkIndex];
+
+            if (!bookmarkAnalysis) {
+                throw new Error(`无法找到索引 ${result.index} 对应的书签`);
             }
 
-            const results = JSON.parse(jsonMatch[0]);
-
-            return results.map((result: any) => {
-                const bookmarkIndex = (result.index || 1) - 1;
-                const bookmarkAnalysis = bookmarks[bookmarkIndex];
-
-                if (!bookmarkAnalysis) {
-                    throw new Error(`无法找到索引 ${result.index} 对应的书签`);
-                }
-
-                return {
-                    bookmark: bookmarkAnalysis.bookmark,
-                    score: bookmarkAnalysis.score,
-                    dimension: dimension,
-                    reason: bookmarkAnalysis.reason,
-                    priority: Number(result.priority) || 1,
-                    recommendReason: result.reason || '推荐理由未知'
-                };
-            });
-        } catch (error) {
-            // 解析失败时按分数排序返回
-            return bookmarks.map((bookmarkAnalysis, index) => ({
+            return {
                 bookmark: bookmarkAnalysis.bookmark,
                 score: bookmarkAnalysis.score,
                 dimension: dimension,
                 reason: bookmarkAnalysis.reason,
-                priority: 5 - index,
-                recommendReason: '基于评分推荐'
-            }));
-        }
+                priority: Number(result.priority) || 1,
+                recommendReason: result.reason || '推荐理由未知'
+            };
+        });
     }
 
     // 测试API连接
