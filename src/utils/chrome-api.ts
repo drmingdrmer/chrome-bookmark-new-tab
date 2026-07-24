@@ -1,40 +1,43 @@
 import { BookmarkTreeNode, Bookmark } from '@/types/bookmark';
 
 /**
+ * Wrap a callback-style Chrome API call, rejecting on chrome.runtime.lastError
+ *
+ * Chrome reports failures through lastError rather than throwing, so a
+ * callback that ignores it turns any API error into a silent undefined.
+ */
+function promisify<T>(call: (callback: (value: T) => void) => void): Promise<T> {
+    return new Promise((resolve, reject) => {
+        call((value) => {
+            if (chrome.runtime.lastError) {
+                console.error('Chrome API 调用失败:', chrome.runtime.lastError);
+                reject(new Error(chrome.runtime.lastError.message));
+            } else {
+                resolve(value);
+            }
+        });
+    });
+}
+
+/**
  * Get all bookmarks from Chrome API
  */
 export async function getAllBookmarks(): Promise<BookmarkTreeNode[]> {
-    return new Promise((resolve) => {
-        chrome.bookmarks.getTree((tree) => {
-            resolve(tree);
-        });
-    });
+    return promisify(callback => chrome.bookmarks.getTree(callback));
 }
 
 /**
  * Search bookmarks using Chrome API
  */
 export async function searchBookmarks(query: string): Promise<BookmarkTreeNode[]> {
-    return new Promise((resolve) => {
-        chrome.bookmarks.search(query, (results) => {
-            resolve(results);
-        });
-    });
+    return promisify(callback => chrome.bookmarks.search(query, callback));
 }
 
 /**
  * Delete a bookmark using Chrome API
  */
 export async function deleteBookmark(id: string): Promise<void> {
-    return new Promise((resolve, reject) => {
-        chrome.bookmarks.remove(id, () => {
-            if (chrome.runtime.lastError) {
-                reject(chrome.runtime.lastError);
-            } else {
-                resolve();
-            }
-        });
-    });
+    return promisify<void>(callback => chrome.bookmarks.remove(id, () => callback()));
 }
 
 /**
@@ -44,46 +47,35 @@ export async function moveBookmark(
     id: string,
     destination: { parentId?: string; index?: number }
 ): Promise<BookmarkTreeNode> {
-    return new Promise((resolve, reject) => {
-        chrome.bookmarks.move(id, destination, (result) => {
-            if (chrome.runtime.lastError) {
-                reject(chrome.runtime.lastError);
-            } else {
-                console.log('🎯 移动书签成功:', id, destination, result);
-                resolve(result);
-            }
-        });
-    });
+    const result = await promisify<BookmarkTreeNode>(
+        callback => chrome.bookmarks.move(id, destination, callback)
+    );
+
+    console.log('🎯 移动书签成功:', id, destination, result);
+    return result;
 }
 
 /**
  * Get storage data from Chrome storage API
  */
 export async function getStorageData<T>(key: string): Promise<T | null> {
-    return new Promise((resolve) => {
-        chrome.storage.local.get([key], (result) => {
-            console.log('📖 Getting storage data for key:', key, 'result:', result);
-            resolve(result[key] || null);
-        });
-    });
+    const result = await promisify<Record<string, T>>(
+        callback => chrome.storage.local.get([key], callback)
+    );
+
+    console.log('📖 Getting storage data for key:', key, 'result:', result);
+    return result[key] ?? null;
 }
 
 /**
  * Set storage data using Chrome storage API
  */
 export async function setStorageData<T>(key: string, value: T): Promise<void> {
-    return new Promise((resolve, reject) => {
-        console.log('💾 Setting storage data:', key, value);
-        chrome.storage.local.set({ [key]: value }, () => {
-            if (chrome.runtime.lastError) {
-                console.error('💾 Storage set error:', chrome.runtime.lastError);
-                reject(chrome.runtime.lastError);
-            } else {
-                console.log('💾 Storage set successful');
-                resolve();
-            }
-        });
-    });
+    console.log('💾 Setting storage data:', key, value);
+
+    await promisify<void>(callback => chrome.storage.local.set({ [key]: value }, () => callback()));
+
+    console.log('💾 Storage set successful');
 }
 
 /**
@@ -95,16 +87,8 @@ export async function batchLoadStorageData(): Promise<{
     aiConfig: any;
 }> {
     const [localData, syncData] = await Promise.all([
-        new Promise<any>((resolve) => {
-            chrome.storage.local.get(['config', 'bookmark_ratings'], (result) => {
-                resolve(result);
-            });
-        }),
-        new Promise<any>((resolve) => {
-            chrome.storage.sync.get(['apiUrl', 'apiKey', 'model'], (result) => {
-                resolve(result);
-            });
-        })
+        promisify<any>(callback => chrome.storage.local.get(['config', 'bookmark_ratings'], callback)),
+        promisify<any>(callback => chrome.storage.sync.get(['apiUrl', 'apiKey', 'model'], callback))
     ]);
 
     return {

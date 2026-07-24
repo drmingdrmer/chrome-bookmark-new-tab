@@ -256,8 +256,8 @@ export function useBookmarks() {
             try {
                 const updatedRatings = await getAllRatings();
                 setAllRatings(updatedRatings);
-            } catch (error) {
-
+            } catch (err) {
+                setError(err instanceof Error ? err.message : 'Failed to reload ratings');
             }
         };
 

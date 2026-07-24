@@ -36,19 +36,12 @@ export function useSettings(storageData?: any) {
             } else {
                 // Fallback to individual loading
                 const savedConfig = await getStorageData<Config>('config');
-                let aiConfig = {};
-                if (typeof chrome !== 'undefined' && chrome.storage) {
-                    try {
-                        const aiResult = await chrome.storage.sync.get(['apiUrl', 'apiKey', 'model']);
-                        aiConfig = {
-                            aiApiUrl: aiResult.apiUrl || '',
-                            aiApiKey: aiResult.apiKey || '',
-                            aiModel: aiResult.model || ''
-                        };
-                    } catch (aiError) {
-
-                    }
-                }
+                const aiResult = await chrome.storage.sync.get(['apiUrl', 'apiKey', 'model']);
+                const aiConfig = {
+                    aiApiUrl: aiResult.apiUrl || '',
+                    aiApiKey: aiResult.apiKey || '',
+                    aiModel: aiResult.model || ''
+                };
 
                 finalConfig = {
                     ...DEFAULT_CONFIG,
