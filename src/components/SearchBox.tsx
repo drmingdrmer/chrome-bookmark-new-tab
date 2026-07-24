@@ -41,7 +41,7 @@ export function SearchBox({ value, onSearch, onClear, placeholder = "Search book
     };
 
     return (
-        <div className="relative w-full max-w-lg mx-auto mb-6">
+        <div className="relative w-full max-w-lg mx-auto">
             <div className="relative">
                 <Search className="absolute left-2.5 top-1/2 transform -translate-y-1/2 text-gray-400 w-4 h-4" />
                 <input

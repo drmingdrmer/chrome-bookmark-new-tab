@@ -15,11 +15,15 @@ import BookmarkItem from './BookmarkItem';
 import FolderColumn from './FolderColumn';
 import { SettingsPanel } from './SettingsPanel';
 import { AIAnalysisPanel } from './AIAnalysisPanel';
+import { ScoreRangeSlider } from './ScoreRangeSlider';
 import { useBookmarks } from '@/hooks/useBookmarks';
 import { useSettings } from '@/hooks/useSettings';
 import { chunkArray, getFolderPath } from '@/utils/bookmark-helpers';
 import { FULL_SCORE_RANGE, isFullScoreRange, isInScoreRange } from '@/utils/bookmark-ratings';
 import { Bookmark, ScoreRange } from '@/types/bookmark';
+
+// 评分筛选器和它右侧的等宽占位块共用，两者相等搜索框才会居中
+const SCORE_FILTER_WIDTH = 'w-48 shrink-0';
 
 // 背景图 + 黑色遮罩层，加载中/出错/正常三种状态共用
 function PageBackground({ children }: { children: React.ReactNode }) {
@@ -366,34 +370,44 @@ export function App() {
                 {/* 内容容器 */}
                 <div className="relative z-10">
                     {/* Header */}
-                    <header className="relative p-4">
+                    <header className="flex items-center gap-3 p-4 pb-10">
                         {/* AI Analysis Button */}
                         <button
                             onClick={() => setIsAIAnalysisOpen(true)}
-                            className="absolute top-4 left-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
+                            className="shrink-0 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
                             aria-label="AI Analysis"
                             tabIndex={-1}
                         >
                             <Brain className="w-5 h-5" />
                         </button>
 
+                        {/* 评分筛选：常驻表头，随时可以调整显示范围 */}
+                        <div className={SCORE_FILTER_WIDTH} title="只显示评分落在该区间内的书签">
+                            <ScoreRangeSlider range={scoreRange} onChange={setScoreRange} />
+                        </div>
+
+                        {/* Search Box */}
+                        <div className="flex-1 min-w-0">
+                            <SearchBox
+                                value={searchTerm}
+                                onSearch={searchBookmarks}
+                                onClear={clearSearch}
+                            />
+                        </div>
+
+                        {/* 与左侧筛选器等宽，让搜索框保持在页面正中 */}
+                        <div className={SCORE_FILTER_WIDTH} aria-hidden="true" />
+
                         {/* Settings Button */}
                         <button
                             id="settings-toggle"
                             onClick={toggleSettings}
-                            className="absolute top-4 right-4 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
+                            className="shrink-0 p-2 text-gray-400 hover:text-white hover:bg-white/10 rounded-lg"
                             aria-label="Settings"
                             tabIndex={-1}
                         >
                             <Settings className="w-5 h-5" />
                         </button>
-
-                        {/* Search Box */}
-                        <SearchBox
-                            value={searchTerm}
-                            onSearch={searchBookmarks}
-                            onClear={clearSearch}
-                        />
                     </header>
 
                     {/* Main Content */}
@@ -415,8 +429,6 @@ export function App() {
                         isOpen={isAIAnalysisOpen}
                         onClose={() => setIsAIAnalysisOpen(false)}
                         bookmarks={Object.values(allBookmarks).filter(b => !b.isFolder)}
-                        scoreRange={scoreRange}
-                        onScoreRangeChange={setScoreRange}
                     />
 
                     {/* Drag Overlay */}
