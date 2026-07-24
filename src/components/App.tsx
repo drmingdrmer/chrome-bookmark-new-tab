@@ -320,7 +320,7 @@ export function App() {
     if (isLoading) {
         return (
             <div className="min-h-screen w-full bg-black relative" style={{
-                backgroundImage: 'url(../girl-grey.jpg)',
+                backgroundImage: 'url(girl-grey.jpg)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
@@ -345,7 +345,7 @@ export function App() {
     if (error) {
         return (
             <div className="min-h-screen w-full bg-black relative" style={{
-                backgroundImage: 'url(../girl-grey.jpg)',
+                backgroundImage: 'url(girl-grey.jpg)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',
@@ -378,7 +378,7 @@ export function App() {
             onDragEnd={handleDragEnd}
         >
             <div className="min-h-screen w-full bg-black relative" style={{
-                backgroundImage: 'url(../girl-grey.jpg)',
+                backgroundImage: 'url(girl-grey.jpg)',
                 backgroundSize: 'cover',
                 backgroundPosition: 'center',
                 backgroundRepeat: 'no-repeat',

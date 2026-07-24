@@ -84,16 +84,9 @@ package: build ## 构建并打包扩展为zip文件
 		echo "❌ 构建目录不存在，请先运行 make build"; \
 		exit 1; \
 	fi
-	@# 创建临时目录
-	@mkdir -p temp_package
-	@# 复制必要文件
-	@cp manifest.json temp_package/
-	@cp -r $(DIST_DIR)/* temp_package/
-	@cp -r icons temp_package/ 2>/dev/null || true
-	@# 创建zip包
-	@cd temp_package && zip -r ../$(PACKAGE_FILE) . -x "*.map" "*.LICENSE.txt"
-	@# 清理临时目录
-	@rm -rf temp_package
+	@# dist/ 已是完整的扩展根目录，直接打包
+	@rm -f $(PACKAGE_FILE)
+	@cd $(DIST_DIR) && zip -r ../$(PACKAGE_FILE) . -x "*.map" "*.LICENSE.txt"
 	@echo "✅ 扩展已打包: $(PACKAGE_FILE)"
 
 # 快速命令组合
@@ -136,7 +129,7 @@ install-chrome: package ## 构建、打包，并提示如何在Chrome中安装
 	@echo "  1. 打开 Chrome，访问 chrome://extensions/"
 	@echo "  2. 启用右上角的 '开发者模式'"
 	@echo "  3. 点击 '加载已解压的扩展程序'"
-	@echo "  4. 选择项目根目录（包含manifest.json的目录）"
+	@echo "  4. 选择 $(DIST_DIR)/ 目录"
 	@echo "  5. 或者拖拽 $(PACKAGE_FILE) 到扩展页面"
 	@echo ""
 

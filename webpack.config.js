@@ -1,5 +1,6 @@
 const path = require('path');
 const HtmlWebpackPlugin = require('html-webpack-plugin');
+const CopyWebpackPlugin = require('copy-webpack-plugin');
 
 module.exports = (env, argv) => {
     const isProduction = argv.mode === 'production';
@@ -56,6 +57,14 @@ module.exports = (env, argv) => {
                 filename: 'new-tab.html',
                 chunks: ['new-tab'],
                 inject: 'body',
+            }),
+            // dist/ is the extension root, so every runtime asset must land there
+            new CopyWebpackPlugin({
+                patterns: [
+                    { from: 'manifest.json' },
+                    { from: 'icons', to: 'icons' },
+                    { from: 'girl-grey.jpg' },
+                ],
             }),
         ],
         devtool: isProduction ? false : 'source-map',
