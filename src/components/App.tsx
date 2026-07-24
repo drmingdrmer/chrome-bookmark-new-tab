@@ -12,6 +12,7 @@ import {
 } from '@dnd-kit/core';
 import { SearchBox } from './SearchBox';
 import BookmarkItem from './BookmarkItem';
+import { BookmarkCascade } from './BookmarkCascade';
 import FolderColumn from './FolderColumn';
 import { SettingsPanel } from './SettingsPanel';
 import { AIAnalysisPanel } from './AIAnalysisPanel';
@@ -253,7 +254,7 @@ export function App() {
         const { folders, directBookmarks } = getFolderData();
         const isFiltering = !isFullScoreRange(scoreRange);
 
-        const columns: React.ReactNode[] = [];
+        const columns: React.ReactElement[] = [];
 
         // Add direct bookmarks column if any exist
         const visibleDirectBookmarks = directBookmarks.filter(isInSelectedScores);
@@ -331,12 +332,7 @@ export function App() {
         }
 
         return (
-            <div
-                className="grid items-start gap-3 [&>div]:h-auto"
-                style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 18rem), 1fr))' }}
-            >
-                {columns}
-            </div>
+            <BookmarkCascade>{columns}</BookmarkCascade>
         );
     }, [
         getFolderData,

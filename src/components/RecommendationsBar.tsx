@@ -40,8 +40,8 @@ export function RecommendationsBar({
     onRefresh
 }: RecommendationsBarProps) {
     return (
-        <section className="mb-3">
-            <div className="flex items-center gap-2 mb-2 px-1">
+        <section className="relative mb-3 overflow-hidden rounded-2xl border border-white/10 bg-black/30 p-2.5 shadow-lg shadow-black/20 backdrop-blur-md">
+            <div className="relative flex items-center gap-2 mb-2 px-1">
                 <div className="flex items-center gap-2 text-white">
                     <Sparkles className="w-4 h-4 text-yellow-400" />
                     <h2 className="text-sm font-semibold">推荐阅读</h2>
@@ -65,13 +65,13 @@ export function RecommendationsBar({
             )}
 
             <div
-                className="grid gap-3"
+                className="relative grid gap-3"
                 style={{ gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 18rem), 1fr))' }}
             >
                 {DIMENSION_META.map(meta => {
                     const recs = recommendations[meta.key] || [];
                     return (
-                        <div key={meta.key} className="rounded-xl border border-white/10 bg-black/40 p-2 min-w-0">
+                        <div key={meta.key} className="rounded-lg border border-white/10 bg-white/[0.06] p-2 min-w-0">
                             <div className="flex items-center justify-between mb-1.5 px-1">
                                 <span className={`text-sm font-medium ${meta.color}`}>
                                     {meta.icon} {meta.label}
