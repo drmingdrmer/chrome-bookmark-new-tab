@@ -429,6 +429,7 @@ export function App() {
                         isOpen={isAIAnalysisOpen}
                         onClose={() => setIsAIAnalysisOpen(false)}
                         bookmarks={Object.values(allBookmarks).filter(b => !b.isFolder)}
+                        allRatings={allRatings}
                     />
 
                     {/* Drag Overlay */}

@@ -5,7 +5,6 @@ import { BookmarkAnalysis, BookmarkRecommendation, BookmarkDimension, Bookmark }
 interface AIState {
     isLoading: boolean;
     error: string | null;
-    analyses: BookmarkAnalysis[];
     recommendations: BookmarkRecommendation[];
 }
 
@@ -19,7 +18,6 @@ export function useAI() {
     const [state, setState] = useState<AIState>({
         isLoading: false,
         error: null,
-        analyses: [],
         recommendations: []
     });
 
@@ -72,33 +70,11 @@ export function useAI() {
 
 
 
-    // 批量分析书签
-    const analyzeBatch = useCallback(async (
+    // 批量分析书签，交由服务层按批请求；调用方（各栏目评分）各自管理进度与状态
+    const analyzeBatch = useCallback((
         bookmarks: Bookmark[],
         onProgress?: (step: string) => void
-    ) => {
-        setState(prev => ({ ...prev, isLoading: true, error: null }));
-
-        try {
-            const analyses = await aiService.analyzeBatch(bookmarks, onProgress);
-            setState(prev => ({
-                ...prev,
-                isLoading: false,
-                analyses: [
-                    ...prev.analyses.filter(a => !bookmarks.some(b => b.id === a.bookmark.id)),
-                    ...analyses
-                ]
-            }));
-            return analyses;
-        } catch (error) {
-            setState(prev => ({
-                ...prev,
-                isLoading: false,
-                error: error instanceof Error ? error.message : '批量分析失败'
-            }));
-            throw error;
-        }
-    }, []);
+    ) => aiService.analyzeBatch(bookmarks, onProgress), []);
 
     // 获取维度推荐
     const getRecommendations = useCallback(async (
@@ -138,16 +114,6 @@ export function useAI() {
         setState(prev => ({ ...prev, error: null }));
     }, []);
 
-    // 获取分析结果
-    const getAnalysisForBookmark = useCallback((bookmarkId: string) => {
-        return state.analyses.find(a => a.bookmark.id === bookmarkId);
-    }, [state.analyses]);
-
-    // 获取维度推荐
-    const getRecommendationsForDimension = useCallback((dimension: BookmarkDimension) => {
-        return state.recommendations.filter(r => r.dimension === dimension);
-    }, [state.recommendations]);
-
     // 初始化时加载配置
     useEffect(() => {
         loadConfig();
@@ -161,8 +127,6 @@ export function useAI() {
         testConnection,
         analyzeBatch,
         getRecommendations,
-        clearError,
-        getAnalysisForBookmark,
-        getRecommendationsForDimension
+        clearError
     };
 } 

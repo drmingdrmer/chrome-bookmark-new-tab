@@ -1,10 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Folder, Eraser, Brain } from 'lucide-react';
 import { SortableContext, verticalListSortingStrategy } from '@dnd-kit/sortable';
 import { useDroppable } from '@dnd-kit/core';
 import { Bookmark } from '@/types/bookmark';
 import BookmarkItem from './BookmarkItem';
-import { BOOKMARKS_BAR_ID } from '@/utils/bookmark-helpers';
+import { ANALYZE_ALL_EVENT, BOOKMARKS_BAR_ID } from '@/utils/bookmark-helpers';
 import { useBookmarkRatings } from '@/hooks/useBookmarkRatings';
 import { BookmarkRating } from '@/utils/bookmark-ratings';
 
@@ -160,6 +160,15 @@ function FolderColumn({
             setIsRating(false);
         }
     };
+
+    // 顶部"分析全部"广播时，本列自动评分，等价于点击本列的 AI 评分按钮
+    const handleAIRatingRef = useRef(handleAIRating);
+    handleAIRatingRef.current = handleAIRating;
+    useEffect(() => {
+        const onAnalyzeAll = () => { handleAIRatingRef.current(); };
+        window.addEventListener(ANALYZE_ALL_EVENT, onAnalyzeAll);
+        return () => window.removeEventListener(ANALYZE_ALL_EVENT, onAnalyzeAll);
+    }, []);
 
     // 关闭状态显示
     const handleCloseRatingStatus = () => {

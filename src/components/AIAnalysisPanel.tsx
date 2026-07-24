@@ -1,12 +1,15 @@
 import React, { useState } from 'react';
 import { Brain, Sparkles, TrendingUp, Target, X } from 'lucide-react';
 import { useAI } from '@/hooks/useAI';
-import { Bookmark, BookmarkDimension } from '@/types/bookmark';
+import { Bookmark, BookmarkAnalysis, BookmarkDimension } from '@/types/bookmark';
+import { BookmarkRating } from '@/utils/bookmark-ratings';
+import { ANALYZE_ALL_EVENT } from '@/utils/bookmark-helpers';
 
 interface AIAnalysisPanelProps {
     isOpen: boolean;
     onClose: () => void;
     bookmarks: Bookmark[];
+    allRatings: Record<string, BookmarkRating>;
 }
 
 const DIMENSION_LABELS = {
@@ -25,44 +28,40 @@ const DIMENSION_COLORS = {
     other: 'text-gray-400'
 };
 
-export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelProps) {
+export function AIAnalysisPanel({ isOpen, onClose, bookmarks, allRatings }: AIAnalysisPanelProps) {
     const {
         isLoading,
         error,
         isConfigValid,
-        analyzeBatch,
         getRecommendations,
-        analyses,
         recommendations,
         clearError
     } = useAI();
 
     const [selectedDimension, setSelectedDimension] = useState<BookmarkDimension>('work');
-    const [isAnalyzing, setIsAnalyzing] = useState(false);
-    const [progressStep, setProgressStep] = useState('');
 
     if (!isOpen) return null;
 
-    const handleAnalyzeAll = async () => {
+    // 已保存的评分就是"已分析结果"：分布和推荐都直接读取它，无需重新分析
+    const analyses: BookmarkAnalysis[] = bookmarks.flatMap(bookmark => {
+        const rating = bookmark.url ? allRatings[bookmark.url] : undefined;
+        if (!rating) return [];
+        return [{
+            bookmark,
+            score: rating.score,
+            dimension: rating.dimension as BookmarkDimension,
+            reason: rating.reason
+        }];
+    });
+
+    // 触发每个栏目各自评分，等价于逐个点击栏目的 AI 评分按钮；结果保存后分布会自动刷新
+    const handleAnalyzeAll = () => {
         if (!isConfigValid) {
             alert('请先在设置中配置AI参数');
             return;
         }
-
-        setIsAnalyzing(true);
-        setProgressStep('');
         clearError();
-
-        try {
-            await analyzeBatch(bookmarks, (step) => {
-                console.log(`📊 AI分析: ${step}`);
-                setProgressStep(step);
-            });
-        } catch (error) {
-            console.error('分析失败:', error);
-        } finally {
-            setIsAnalyzing(false);
-        }
+        window.dispatchEvent(new CustomEvent(ANALYZE_ALL_EVENT));
     };
 
     const handleGetRecommendations = async (dimension: BookmarkDimension) => {
@@ -71,14 +70,13 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
             return;
         }
 
-        if (analyses.length === 0) {
-            alert('请先分析书签');
+        // 用该维度已分析好的结果直接生成推荐
+        const dimensionAnalyses = analyses.filter(a => a.dimension === dimension);
+        if (dimensionAnalyses.length === 0) {
             return;
         }
 
         try {
-            // 筛选该维度的分析结果
-            const dimensionAnalyses = analyses.filter(a => a.dimension === dimension);
             await getRecommendations(dimension, dimensionAnalyses, 5);
         } catch (error) {
             console.error('获取推荐失败:', error);
@@ -145,20 +143,15 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
                             </h4>
                             <button
                                 onClick={handleAnalyzeAll}
-                                disabled={!isConfigValid || isAnalyzing}
+                                disabled={!isConfigValid}
                                 className="px-3 py-1.5 text-sm text-purple-300 border border-purple-300/50 hover:bg-purple-300/10 rounded-lg disabled:opacity-50 disabled:cursor-not-allowed"
                             >
-                                {isAnalyzing ? '分析中...' : `分析全部 (${bookmarks.length})`}
+                                分析全部 ({bookmarks.length})
                             </button>
                         </div>
 
-                        {/* 分析进度 */}
-                        {isAnalyzing && progressStep && (
-                            <p className="text-sm text-purple-300 mb-4">{progressStep}</p>
-                        )}
-
-                        {/* Analysis Results */}
-                        {analyses.length > 0 && (
+                        {/* Analysis Results：直接来自已保存的评分 */}
+                        {analyses.length > 0 ? (
                             <div className="space-y-3">
                                 <p className="text-sm text-gray-300">
                                     已分析 {analyses.length} 个书签
@@ -178,6 +171,10 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
                                     ))}
                                 </div>
                             </div>
+                        ) : (
+                            <p className="text-sm text-gray-400">
+                                {'还没有评分结果，点击"分析全部"或各栏目的评分按钮生成'}
+                            </p>
                         )}
                     </div>
 
@@ -256,4 +253,4 @@ export function AIAnalysisPanel({ isOpen, onClose, bookmarks }: AIAnalysisPanelP
             </div>
         </>
     );
-} 
+}

@@ -5,6 +5,9 @@ export const BOOKMARKS_BAR_ID = '1';
 export const OTHER_BOOKMARKS_ID = '2';
 export const MOBILE_BOOKMARKS_ID = '3';
 
+// 顶部"分析全部"广播此事件，每个书签栏目各自触发一次 AI 评分
+export const ANALYZE_ALL_EVENT = 'analyze-all-bookmarks';
+
 // 这些根文件夹本身不显示为路径的一部分
 const ROOT_FOLDER_IDS = [BOOKMARKS_BAR_ID, OTHER_BOOKMARKS_ID, MOBILE_BOOKMARKS_ID];
 
