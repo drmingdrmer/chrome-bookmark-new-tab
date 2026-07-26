@@ -108,6 +108,16 @@ export function App() {
         [refreshRecommendations, flatBookmarks, allRatings]
     );
 
+    const visibleRecommendations = React.useMemo(
+        () => Object.fromEntries(
+            Object.entries(recommendations).map(([dimension, recs]) => [
+                dimension,
+                recs.filter(({ bookmark }) => Boolean(allBookmarks[bookmark.id]))
+            ])
+        ),
+        [allBookmarks, recommendations]
+    );
+
     const sensors = useSensors(
         useSensor(PointerSensor, {
             activationConstraint: {
@@ -432,11 +442,12 @@ export function App() {
                         {searchTerm ? renderSearchResults() : (
                             <>
                                 <RecommendationsBar
-                                    recommendations={recommendations}
+                                    recommendations={visibleRecommendations}
                                     isLoading={recommendationsLoading}
                                     error={recommendationsError}
                                     isConfigValid={aiConfigValid}
                                     onRefresh={handleRefreshRecommendations}
+                                    onDelete={deleteBookmark}
                                 />
                                 {bookmarkFolders}
                             </>

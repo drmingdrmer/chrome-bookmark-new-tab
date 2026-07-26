@@ -1,7 +1,8 @@
 import React from 'react';
-import { Sparkles, RefreshCw, Flame } from 'lucide-react';
-import { BookmarkDimension } from '@/types/bookmark';
+import { Sparkles, RefreshCw, Flame, Trash2 } from 'lucide-react';
+import { Bookmark, BookmarkDimension } from '@/types/bookmark';
 import { RecommendationsByDimension } from '@/utils/bookmark-recommendations';
+import { DeleteConfirmation } from './DeleteConfirmation';
 
 interface RecommendationsBarProps {
     recommendations: RecommendationsByDimension;
@@ -9,6 +10,7 @@ interface RecommendationsBarProps {
     error: string | null;
     isConfigValid: boolean;
     onRefresh: () => void;
+    onDelete: (bookmarkId: string) => void;
 }
 
 // 固定顺序展示全部 5 个维度
@@ -37,8 +39,23 @@ export function RecommendationsBar({
     isLoading,
     error,
     isConfigValid,
-    onRefresh
+    onRefresh,
+    onDelete
 }: RecommendationsBarProps) {
+    const [confirmingBookmarkId, setConfirmingBookmarkId] = React.useState<string | null>(null);
+
+    const handleDelete = (event: React.MouseEvent, bookmark: Bookmark) => {
+        event.preventDefault();
+        event.stopPropagation();
+
+        setConfirmingBookmarkId(current => current === bookmark.id ? null : bookmark.id);
+    };
+
+    const confirmDelete = (bookmarkId: string) => {
+        onDelete(bookmarkId);
+        setConfirmingBookmarkId(null);
+    };
+
     return (
         <section className="relative mb-3 overflow-hidden rounded-2xl border border-white/10 bg-black/30 p-2.5 shadow-lg shadow-black/20 backdrop-blur-md">
             <div className="relative flex items-center gap-2 mb-2 px-1">
@@ -84,12 +101,12 @@ export function RecommendationsBar({
                             ) : (
                                 <ul className="space-y-1">
                                     {recs.map(rec => (
-                                        <li key={rec.bookmark.id}>
+                                        <li key={rec.bookmark.id} className="group relative">
                                             <a
                                                 href={rec.bookmark.url}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="block p-1.5 rounded-lg hover:bg-white/5"
+                                                className="block p-1.5 pr-6 rounded-lg hover:bg-white/5"
                                                 title={rec.recommendReason}
                                             >
                                                 <div className="flex items-start justify-between gap-2">
@@ -98,12 +115,33 @@ export function RecommendationsBar({
                                                     </span>
                                                     <PriorityBadge priority={rec.priority} />
                                                 </div>
+                                                {rec.bookmark.url && (
+                                                    <p className="text-sm text-gray-500 truncate leading-tight mt-0.5">
+                                                        {rec.bookmark.url.replace(/^https?:\/\//, '')}
+                                                    </p>
+                                                )}
                                                 {rec.recommendReason && (
-                                                    <p className="text-[11px] text-gray-500 line-clamp-1 mt-0.5">
+                                                    <p className="text-[11px] text-gray-400 line-clamp-1 mt-0.5">
                                                         {rec.recommendReason}
                                                     </p>
                                                 )}
                                             </a>
+                                            {confirmingBookmarkId === rec.bookmark.id && (
+                                                <DeleteConfirmation
+                                                    bookmarkTitle={rec.bookmark.title}
+                                                    onCancel={() => setConfirmingBookmarkId(null)}
+                                                    onConfirm={() => confirmDelete(rec.bookmark.id)}
+                                                />
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={event => handleDelete(event, rec.bookmark)}
+                                                className={`absolute -bottom-0.5 -right-0.5 p-1 text-white bg-black/80 hover:text-white hover:bg-red-500/80 rounded z-10 border border-white/20 ${confirmingBookmarkId === rec.bookmark.id ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
+                                                aria-label={`Delete ${rec.bookmark.title}`}
+                                                aria-expanded={confirmingBookmarkId === rec.bookmark.id}
+                                            >
+                                                <Trash2 className="w-3 h-3" />
+                                            </button>
                                         </li>
                                     ))}
                                 </ul>

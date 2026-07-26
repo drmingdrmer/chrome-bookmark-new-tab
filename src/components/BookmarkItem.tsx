@@ -5,6 +5,7 @@ import { CSS } from '@dnd-kit/utilities';
 import { Bookmark } from '@/types/bookmark';
 import { splitBySearchTerm } from '@/utils/bookmark-helpers';
 import { BookmarkRating } from '@/utils/bookmark-ratings';
+import { DeleteConfirmation } from './DeleteConfirmation';
 
 function Highlighted({ text, searchTerm }: { text: string; searchTerm: string }) {
     return (
@@ -42,6 +43,7 @@ function BookmarkItem({
 }: BookmarkItemProps) {
     // 搜索模式下禁用拖拽功能
     const isSearchMode = !!searchTerm;
+    const [isConfirmingDelete, setIsConfirmingDelete] = React.useState(false);
 
     const {
         attributes,
@@ -64,10 +66,12 @@ function BookmarkItem({
         e.preventDefault();
         e.stopPropagation();
 
-        const confirmed = window.confirm(`Delete "${bookmark.title}"?`);
-        if (confirmed) {
-            onDelete(bookmark.id);
-        }
+        setIsConfirmingDelete(current => !current);
+    };
+
+    const confirmDelete = () => {
+        onDelete(bookmark.id);
+        setIsConfirmingDelete(false);
     };
 
     const handleLinkClick = (e: React.MouseEvent) => {
@@ -243,11 +247,20 @@ function BookmarkItem({
                     )}
                 </a>
 
+                {isConfirmingDelete && (
+                    <DeleteConfirmation
+                        bookmarkTitle={bookmark.title}
+                        onCancel={() => setIsConfirmingDelete(false)}
+                        onConfirm={confirmDelete}
+                    />
+                )}
+
                 {/* Delete Button - 绝对定位在右下角，紧贴边界 */}
                 <button
                     onClick={handleDelete}
-                    className="absolute -bottom-0.5 -right-0.5 opacity-0 group-hover:opacity-100 p-1 text-white bg-black/80 hover:text-white hover:bg-red-500/80 rounded z-10 border border-white/20"
+                    className={`absolute -bottom-0.5 -right-0.5 p-1 text-white bg-black/80 hover:text-white hover:bg-red-500/80 rounded z-10 border border-white/20 ${isConfirmingDelete ? 'opacity-100' : 'opacity-0 group-hover:opacity-100'}`}
                     aria-label={`Delete ${bookmark.title}`}
+                    aria-expanded={isConfirmingDelete}
                     tabIndex={isSearchMode ? -1 : 0}  // 搜索模式下不可通过Tab访问
                 >
                     <Trash2 className="w-3 h-3" />
